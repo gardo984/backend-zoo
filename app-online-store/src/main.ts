@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import hbs from 'hbs';
 import hbsUtils from 'hbs-utils';
 import { join } from 'path';
+import session from 'express-session';
 
 async function bootstrap() {
   /*const app = await NestFactory.create(AppModule);*/
@@ -16,6 +17,18 @@ async function bootstrap() {
   hbs.registerPartials(layoutsPath);
   hbsUtils(hbs).registerWatchedPartials(layoutsPath);
   app.setViewEngine('hbs')
+  
+  /*configuration for session*/
+  app.use(session({
+    secret: 'nest-book',
+    resave: false,
+    saveUninitialized: false,
+  }));
+  app.use(function(req, res, next) {
+    res.locals.session = req.session
+    next();
+  })
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

@@ -10,19 +10,26 @@ import { ProductsService } from './models/products.service';
 import { Product } from './models/products.entity';
 import { TypeORMError } from 'typeorm';
 
+import { AuthModule } from './auth/auth.module';
+import { UsersService } from './models/users.service';
+import { User } from './models/user.entity';
+
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
-    TypeOrmModule.forFeature([Product,]),
+    TypeOrmModule.forFeature([Product, User]),
     AdminModule,
+    AuthModule,
   ],
-  controllers: [AppController, ProductsController],
+  controllers: [AppController, ProductsController, ],
   providers: [
     ProductsService,
+    UsersService,
   ],
   exports: [
     ProductsService,
+    UsersService,
   ]
 })
 export class AppModule {}

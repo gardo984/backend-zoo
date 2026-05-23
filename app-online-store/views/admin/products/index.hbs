@@ -5,7 +5,10 @@
 				Create Products
 			</div>
 			<div class="card-body">
-				<form method="POST" action="/admin/products/store">
+				<form
+					method="POST"
+					action="/admin/products/store"
+					enctype="multipart/form-data">
 					<div class="row">
 						<div class="col">
 							<div class="mb-3 row">
@@ -26,6 +29,21 @@
 									<input type="number" name="price" class="form-control" required>
 								</div>
 							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="mb-3 row">
+								<label class="col-lg-2 col-md-6 col-sm-12 col-form-label">
+									Image:
+								</label>
+								<div class="col-lg-10 col-md-6 col-sm-12">
+									<input class="form-control" type="file" name="image">
+								</div>
+							</div>
+						</div>
+						<div class="col">
+							&nbsp;
 						</div>
 					</div>
 					<div class="mb-3">
@@ -58,8 +76,19 @@
 							<tr>
 								<td>{{getId}}</td>
 								<td>{{getName}}</td>
-								<td scope="col">Edit</td>
-								<td scope="col">Delete</td>
+								<td scope="col">
+									<button class="btn btn-primary">
+									<a class="btn btn-primary" href="/admin/products/{{getId}}">
+										<i class="bi-pencil"></i>
+									</a>
+								</td>
+								<td scope="col">
+									<form action="/admin/products/{{getId}}" method="POST">
+										<button class="btn btn-danger">
+											<i class="bi-trash"></i>
+										</button>
+									</form>
+								</td>
 							</tr>
 						{{/each}}
 					</tbody>

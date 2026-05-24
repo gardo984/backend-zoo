@@ -34,6 +34,16 @@ async function bootstrap() {
     next();
   })
 
+
+  /*adding authorization to /auth routes*/
+  app.use(/^\/admin(\/.*)?$/, function(req, res, next) {
+    if (req.session.user && req.session.user.role == 'admin') {
+      next();
+    } else {
+      res.redirect('/')
+    }
+  })
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

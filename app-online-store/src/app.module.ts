@@ -13,6 +13,7 @@ import { TypeORMError } from 'typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UsersService } from './models/users.service';
 import { User } from './models/user.entity';
+import { CartModule } from './cart/cart.module';
 
 @Global()
 @Module({
@@ -21,8 +22,12 @@ import { User } from './models/user.entity';
     TypeOrmModule.forFeature([Product, User]),
     AdminModule,
     AuthModule,
+    CartModule,
   ],
-  controllers: [AppController, ProductsController, ],
+  controllers: [
+    AppController,
+    ProductsController,
+  ],
   providers: [
     ProductsService,
     UsersService,

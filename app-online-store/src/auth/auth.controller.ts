@@ -40,7 +40,7 @@ export class AuthController {
 	}
 
 	@Get('/login')
-	@Render('auh/login')
+	@Render('auth/login')
 	async login() {
 		const viewData = [];
 		viewData['title'] = 'User Login - Online Store';
@@ -59,6 +59,7 @@ export class AuthController {
 			request.session.user = {
 				id: userInstance.getId(),
 				email: userInstance.getEmail(),
+				name: userInstance.getName(),
 				role: userInstance.getRole(),
 			}
 			return response.redirect('/')
@@ -67,7 +68,7 @@ export class AuthController {
 		}
 	}
 
-	@Post('/logout')
+	@Get('/logout')
 	@Redirect('/')
 	async logout(@Req() request) {
 		request.session.user = null;

@@ -10,11 +10,15 @@ import {
 	UploadedFile,
 	Param,
 	NotFoundException,
+	Req,
+	Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 import { ProductsService } from 'src/models/products.service';
 import { Product } from '../models/products.entity';
+import { ProductValidator } from 'src/validators/product.validator';
+import * as fs from 'fs';
 
 
 @Controller('/admin/products')
@@ -35,14 +39,27 @@ export class AdminProductsController {
 	@Post('/store')
 	@UseInterceptors(FileInterceptor('image', { dest: './public/uploads' }))
 	@Redirect('/admin/products')
-	async store(@Body() body, @UploadedFile() file: Express.Multer.File) {
+	async store(
+		@Body() body,
+		@UploadedFile() file: Express.Multer.File,
+		@Req() request
+	) {
 		/*console.log(`fields: ${Object.getOwnPropertyNames(file)}`)*/
-		const newProduct = new Product();
-		newProduct.setName(body.name);
-		newProduct.setDescription(body.description);
-		newProduct.setPrice(body.price);
-		newProduct.setImage(file.filename);
-		await this.productsService.createOrUpdate(newProduct);
+
+		const toValidate: string[] = ['name', 'description', 'price', 'imageCreate'];
+		const errors: string[] = ProductValidator.validate(body, file, toValidate);
+
+		if (errors.length > 0) {
+			if (file) fs.unlinkSync(file.path);
+			request.session.flashErrors = errors;
+		} else {
+			const newProduct = new Product();
+			newProduct.setName(body.name);
+			newProduct.setDescription(body.description);
+			newProduct.setPrice(body.price);
+			newProduct.setImage(file.filename);
+			await this.productsService.createOrUpdate(newProduct);
+		}
 	}
 
 	@Post('/:id')
@@ -64,23 +81,34 @@ export class AdminProductsController {
 
 	@Post('/:id/update')
 	@UseInterceptors(FileInterceptor('image', { dest: './public/uploads' }))
-	@Redirect('/admin/products')
+	/*@Redirect('/admin/products')*/
 	async update(
 		@Body() body,
 		@UploadedFile() file: Express.Multer.File,
-		@Param() params
+		@Param() params,
+		@Req() request,
+		@Res() response
 	) {
-		const productInstance = await this.productsService.findOne(params.id);
-		if (!productInstance) {
- 			throw new NotFoundException(`Product with ID ${params.id} not found`);
+		
+		const toValidate: string[] = ['name', 'description', 'price', 'imageUpdate'];
+		const errors: string[] = ProductValidator.validate(body, file, toValidate);
+		if (errors.length > 0) {
+			if (file) fs.unlinkSync(file.path);
+			request.session.flashErrors = errors;
+			return response.redirect(`/admin/products/${params.id}`);
+		} else {
+			const productInstance = await this.productsService.findOne(params.id);
+			if (!productInstance) {
+	 			throw new NotFoundException(`Product with ID ${params.id} not found`);
+			}
+			productInstance?.setName(body.name);
+			productInstance?.setDescription(body.description);
+			productInstance?.setPrice(body.price);
+			if (file) {
+				productInstance?.setImage(file.filename);	
+			}
+			await this.productsService.createOrUpdate(productInstance);
+			return response.redirect('/admin/products/');
 		}
-		productInstance?.setName(body.name);
-		productInstance?.setDescription(body.description);
-		productInstance?.setPrice(body.price);
-		if (file) {
-			productInstance?.setImage(file.filename);	
-		}
-		await this.productsService.createOrUpdate(productInstance);
-
 	}
 }

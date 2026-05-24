@@ -26,6 +26,11 @@ async function bootstrap() {
   }));
   app.use(function(req, res, next) {
     res.locals.session = req.session
+    const errors: string[] = req.session.flashErrors;
+    if (errors) {
+      res.locals.flashErrors = errors;
+      req.session.flashErrors = null;
+    }
     next();
   })
 

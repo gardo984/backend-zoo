@@ -1,8 +1,10 @@
 import {
 	Entity,
 	Column,
-	PrimaryGeneratedColumn
+	PrimaryGeneratedColumn,
+	OneToMany
 } from 'typeorm';
+import { Item } from './item.entity';
 
 
 @Entity()
@@ -21,6 +23,11 @@ export class Product {
 
 	@Column()
 	price: number;
+
+
+	@OneToMany(() => Item, (item) => item.product)
+	items: Item[];
+
 
 	getId(): number {
 		return this.id;
@@ -51,6 +58,14 @@ export class Product {
 	}
 	setPrice(price: number) {
 		this.price = price;
+	}
+
+	getItems(): Item[] {
+		return this.items;
+	}
+
+	setItems(value: Item[]) {
+		this.items = value;
 	}
 
 	static sumPricesByQuantities(

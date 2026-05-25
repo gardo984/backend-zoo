@@ -24,7 +24,7 @@ async function bootstrap() {
     resave: false,
     saveUninitialized: false,
   }));
-  app.use(function(req, res, next) {
+  app.use(function (req, res, next) {
     res.locals.session = req.session
     const errors: string[] = req.session.flashErrors;
     if (errors) {
@@ -35,9 +35,18 @@ async function bootstrap() {
   })
 
 
-  /*adding authorization to /auth routes*/
-  app.use(/^\/admin(\/.*)?$/, function(req, res, next) {
+  /* urls accessible by admin user */
+  app.use(/^\/admin(\/.*)?$/, function (req, res, next) {
     if (req.session.user && req.session.user.role == 'admin') {
+      next();
+    } else {
+      res.redirect('/')
+    }
+  })
+
+  /*urls accessible by authenticated users*/
+  app.use(/^\/account(\/.*)?$/, function(req, res, next) {
+    if (req.session.user) {
       next();
     } else {
       res.redirect('/')

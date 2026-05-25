@@ -30,4 +30,14 @@ export class UsersService {
 		}
 		return null;
 	}
+
+	async findOne(userId: number): Promise<User | null> {
+		return await this.userRepository.findOne({
+			where: {id: userId}
+		});
+	}
+
+	async updateBalance(userId: number, balance: number) {
+		return this.userRepository.update({id: userId}, {balance: balance})
+	}
 }

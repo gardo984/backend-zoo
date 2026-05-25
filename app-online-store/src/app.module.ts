@@ -14,15 +14,20 @@ import { AuthModule } from './auth/auth.module';
 import { UsersService } from './models/users.service';
 import { User } from './models/user.entity';
 import { CartModule } from './cart/cart.module';
+import { Item } from './models/item.entity';
+import { Order } from './models/order.entity';
+import { OrderService } from './models/order.service';
+import { AccountModule } from './account/account.module';
 
 @Global()
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
-    TypeOrmModule.forFeature([Product, User]),
+    TypeOrmModule.forFeature([Product, User, Order, Item]),
     AdminModule,
     AuthModule,
     CartModule,
+    AccountModule,
   ],
   controllers: [
     AppController,
@@ -31,10 +36,12 @@ import { CartModule } from './cart/cart.module';
   providers: [
     ProductsService,
     UsersService,
+    OrderService,
   ],
   exports: [
     ProductsService,
     UsersService,
+    OrderService,
   ]
 })
 export class AppModule {}

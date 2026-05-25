@@ -29,6 +29,7 @@
     "hbs": "^4.2.1",
     "hbs-utils": "^0.0.4",
     "mariadb": "^3.5.2",
+    "moment": "^2.30.1",
     "mysql2": "^3.22.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

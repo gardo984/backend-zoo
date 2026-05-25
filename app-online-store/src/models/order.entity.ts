@@ -9,7 +9,9 @@ import {
 } from "typeorm";
 import { User } from "./user.entity";
 import { Item } from "./item.entity";
+import { CascadesSubjectBuilder } from "typeorm/persistence/subject-builder/CascadesSubjectBuilder.js";
 
+import moment from 'moment';
 
 @Entity()
 export class Order {
@@ -26,7 +28,9 @@ export class Order {
 	@ManyToOne(() => User, (user) => user.orders)
 	user: User;
 
-	@OneToMany(() => Item, (item) => item.order)
+	@OneToMany(() => Item, (item) => item.order, {
+		cascade: ['insert']
+	})
 	items: Item[];
 
 	getId():number {
@@ -47,6 +51,10 @@ export class Order {
 
 	getDate():Date {
 		return this.date;
+	}
+
+	getFormattedDate(): string {
+		return moment(this.date).format("Y-MM-D HH:mm:ss");
 	}
 
 	setDate(value: Date) {

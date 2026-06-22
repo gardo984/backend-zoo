@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+data:
+  DATABASE_HOST: "library-db-svc"
+  DATABASE_PORT: "3306"
+  DATABASE_NAME: "dblibrary"
+  DATABASE_USERNAME: "root"
+  DATABASE_PASSWORD: "123456"
+  DATABASE_SSL: "0"
+  JWT_SECRET_KEY: "7efa80c7e6db15f9e94e7f41e9c11ff596331575"
+  JWT_ALGORITHM: "HS256"
+  JWT_EXPIRE_MINUTES: "25"
+
+  
+ 

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deploy
+spec:
+  template:
+    spec:
+      initContainers:
+        - image: busybox:latest
+          name: init-db
+          command: ["sh", "-c", "until nc -vz library-db-svc 3306 ; do echo 'waiting for library-db-svc:3306' ; done"]
+
+      containers:
+        - image: "malazo/app-library:latest"
+          name: api
+          envFrom:
+          - configMapRef:
+              name: api-config
+          
+status: {}

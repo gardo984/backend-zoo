@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress-ssl
+  annotations:
+    # enable when cert-manager clusterissuer resource exists
+    cert-manager.io/cluster-issuer: letsencrypt-cissuer
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # enable when traffic is just http
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    # nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  tls:
+  - secretName: secret-tls
+    hosts:
+    - domain.com
+  ingressClassName: public
+  rules:
+  - host: domain.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: svc
+            port:
+              number: 0000
+        path: /
+        pathType: Prefix
+status:
+  loadBalancer: {}

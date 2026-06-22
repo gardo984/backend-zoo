@@ -1,6 +1,6 @@
 services:
   api:
-    image: "malazo/fastapi-app-library:${IMAGE_TAG-latest}"
+    image: "malazo/app-library:${IMAGE_TAG-latest}"
     platform: linux/amd64
     build:
       target: ${TARGET-dev}

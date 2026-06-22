@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: db-deploy
+spec:
+  template:
+    spec:
+      volumes:
+        - name: mariadb-vol
+          persistentVolumeClaim:
+            claimName: db-pvc
+      containers:
+      - name: db
+        image: mariadb:10.10
+        volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mariadb-vol
+        envFrom:
+            - configMapRef:
+                name: db-config
+
+status: {}

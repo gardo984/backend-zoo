@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  name: api-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: api
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        role: api
+    spec:
+      containers:
+        - image: malazo/app-library:latest
+          name: api
+          ports:
+          - containerPort: 8000
+          resources: {}
+          command: ["./entrypoint.sh"]
+          args: ["deploy"]
+status: {}

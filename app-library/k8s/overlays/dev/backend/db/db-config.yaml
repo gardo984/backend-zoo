@@ -5,5 +5,5 @@ metadata:
 data:
   MARIADB_USER: root
   MARIADB_ROOT_PASSWORD: "123456"
-  MARIADB_DATABASE: dbbackoffice
+  MARIADB_DATABASE: dblibrary
   MARIADB_PORT: "3306"

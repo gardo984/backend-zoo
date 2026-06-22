@@ -26,12 +26,7 @@ elif  [ $arg = "setup" ]; then
 elif [ $arg = "unit_tests" ]; then
     pytest -v tests/
 
-elif  [ $arg = "deploy" ]; then
-    # for test purposes
-    alembic upgrade head && \
-        uvicorn app.main:app
-
-elif [ $arg = "nginx" ]; then
+elif [ $arg = "deploy" ]; then
     # the following sentence is for a bug that happen in k8s
     echo 'rc_provide="loopback net"' >> /etc/rc.conf
     

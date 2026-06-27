@@ -10,6 +10,7 @@ RUN adduser --disabled-password -u ${UID} -s /bin/ash app && \
 
 COPY --chown=app app ./${PROJECT_NAME}
 COPY --chown=app alembic ./alembic
+COPY --chown=app tests ./tests
 COPY requirements.txt ./requirements.txt
 COPY alembic.ini ./alembic.ini
 COPY cli.py ./cli.py

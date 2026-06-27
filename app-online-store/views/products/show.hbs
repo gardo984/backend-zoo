@@ -13,6 +13,20 @@
 								{{getName}} (${{getPrice}})
 							</h5>
 							<p class="card-text">{{getDescription}}</p>
+							<p class="card-text">
+								<small class="text-muted">
+									Category ID: {{getCategoryId}} &middot;
+									Author ID: {{getAuthorId}} &middot;
+									External ID: {{getExternalId}}
+								</small>
+							</p>
+							<p class="card-text">
+								{{#if isActive}}
+									<span class="badge bg-success">Active</span>
+								{{else}}
+									<span class="badge bg-secondary">Inactive</span>
+								{{/if}}
+							</p>
 							{{!-- <p class="card-text">
 								<small class="text-muted">Add to Cart</small>
 							</p> --}}

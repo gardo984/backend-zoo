@@ -131,9 +131,14 @@ async def book_create(
     for item in items_to_create:
         try:
             redis_client.publish({
-                "action": "create",
-                "book_id": item.id,
+                "id": item.id,
                 "name": item.name,
+                "category_description": item.category.name if item.category else None,
+                "author_description": item.author.name if item.author else None,
+                "active": item.active,
+                "description": item.description,
+                "image": item.image,
+                "price": float(item.price) if item.price else 0.0,
             })
         except Exception as e:
             print(f"Redis publish failed (create): {e}")
@@ -180,9 +185,14 @@ async def book_update(
     # Publish update event to Redis
     try:
         redis_client.publish({
-            "action": "update",
-            "book_id": instance.id,
+            "id": instance.id,
             "name": instance.name,
+            "category_description": instance.category.name if instance.category else None,
+            "author_description": instance.author.name if instance.author else None,
+            "active": instance.active,
+            "description": instance.description,
+            "image": instance.image,
+            "price": float(instance.price) if instance.price else 0.0,
         })
     except Exception as e:
         print(f"Redis publish failed (update): {e}")

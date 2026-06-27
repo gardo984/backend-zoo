@@ -72,6 +72,10 @@
 						<tr>
 							<th scope="col">ID</th>
 							<th scope="col">Name</th>
+							<th scope="col">Cat ID</th>
+							<th scope="col">Author ID</th>
+							<th scope="col">Active</th>
+							<th scope="col">External ID</th>
 							<th scope="col">Edit</th>
 							<th scope="col">Delete</th>
 						</tr>
@@ -81,6 +85,10 @@
 							<tr>
 								<td>{{getId}}</td>
 								<td>{{getName}}</td>
+								<td>{{getCategoryId}}</td>
+								<td>{{getAuthorId}}</td>
+								<td>{{#if isActive}}Yes{{else}}No{{/if}}</td>
+								<td>{{getExternalId}}</td>
 								<td scope="col">
 									<button class="btn btn-primary">
 									<a class="btn btn-primary" href="/admin/products/{{getId}}">

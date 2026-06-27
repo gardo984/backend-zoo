@@ -24,6 +24,18 @@ export class Product {
 	@Column()
 	price: number;
 
+	@Column({ nullable: true })
+	category_id: number;
+
+	@Column({ nullable: true })
+	author_id: number;
+
+	@Column({ default: true })
+	active: boolean;
+
+	@Column({ type: 'int', unsigned: true, nullable: true })
+	external_id: number;
+
 
 	@OneToMany(() => Item, (item) => item.product)
 	items: Item[];
@@ -58,6 +70,34 @@ export class Product {
 	}
 	setPrice(price: number) {
 		this.price = price;
+	}
+
+	getCategoryId(): number | null {
+		return this.category_id;
+	}
+	setCategoryId(category_id: number | null) {
+		this.category_id = category_id;
+	}
+
+	getAuthorId(): number | null {
+		return this.author_id;
+	}
+	setAuthorId(author_id: number | null) {
+		this.author_id = author_id;
+	}
+
+	isActive(): boolean {
+		return this.active;
+	}
+	setActive(active: boolean) {
+		this.active = active;
+	}
+
+	getExternalId(): number | null {
+		return this.external_id;
+	}
+	setExternalId(external_id: number | null) {
+		this.external_id = external_id;
 	}
 
 	getItems(): Item[] {

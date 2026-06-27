@@ -9,6 +9,12 @@
 						<a href="/products/{{getId}}" class="btn bg-primary text-white">
 							{{getName}}
 						</a>
+						<p class="card-text mt-2">
+							<small class="text-muted">${{getPrice}}</small>
+						</p>
+						{{#unless isActive}}
+							<span class="badge bg-secondary">Inactive</span>
+						{{/unless}}
 					</div>
 				</div>
 			</div>

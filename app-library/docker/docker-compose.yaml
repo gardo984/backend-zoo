@@ -29,6 +29,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
     - fastapi_library
 
@@ -42,6 +44,19 @@ services:
     - $PWD/bin/wait-for-it.sh:/tmp/wait-for-it.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "/tmp/wait-for-it.sh -h localhost -p 3306 || exit 1"]
+    networks:
+    - fastapi_library
+
+  redis:
+    image: "redis:7-alpine"
+    restart: on-failure
+    ports:
+    - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     networks:
     - fastapi_library
 

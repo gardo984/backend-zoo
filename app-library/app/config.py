@@ -27,6 +27,9 @@ config_data = dict(
     jwt_secret_key=os.getenv("JWT_SECRET_KEY") or "fakesecret",
     jwt_algorithm=os.getenv("JWT_ALGORITHM") or "HS256",
     jwt_expire_minutes=os.getenv("JWT_EXPIRE_MINUTES") or 5,
+    redis_host=os.getenv("REDIS_HOST") or "localhost",
+    redis_port=int(os.getenv("REDIS_PORT", "6379")),
+    redis_topic=os.getenv("REDIS_TOPIC") or "book_updates",
 )
 
 
@@ -39,6 +42,9 @@ class Settings(BaseSettings):
     jwt_secret_key: Optional[str]
     jwt_algorithm: Optional[str]
     jwt_expire_minutes: Optional[int]
+    redis_host: Optional[str]
+    redis_port: Optional[int]
+    redis_topic: Optional[str]
 
 
 settings = Settings(**config_data)

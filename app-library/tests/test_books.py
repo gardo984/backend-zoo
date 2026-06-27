@@ -20,6 +20,12 @@ class TestBooks(AppFixtures):
             )
             for _ in range(10)
         ]
+        # Assign description, image, price separately to avoid
+        # passing them as init kwargs that SQLAlchemy may ignore
+        for book in items_to_create:
+            book.description = fake.sentence(nb_words=6)
+            book.image = f"/images/{fake.word()}.png"
+            book.price = fake.pydecimal(left_digits=3, right_digits=2, positive=True)
         db_session.add_all(items_to_create)
         db_session.commit()
         for instance in items_to_create:
@@ -42,6 +48,9 @@ class TestBooks(AppFixtures):
         payload = dict(
             name="The last penguin", category_id=category.id,
             author_id=author.id, active=True,
+            description="A thrilling tale of a penguin",
+            image="/images/penguin.png",
+            price=19.990,
         )
         response = client.post("/books/", json=payload)
         outcome = response.json()
@@ -82,6 +91,9 @@ class TestBooks(AppFixtures):
             category_id=book.category_id,
             author_id=book.author_id,
             active=(not book.active),
+            description="Updated description",
+            image="/images/updated.png",
+            price=29.990,
         )
         response = client.put(
             f"/books/{book.id}/", json=payload,

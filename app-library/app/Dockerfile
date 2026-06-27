@@ -10,62 +10,27 @@ RUN adduser --disabled-password -u ${UID} -s /bin/ash app && \
 
 COPY --chown=app app ./${PROJECT_NAME}
 COPY --chown=app alembic ./alembic
+COPY --chown=app alembic.ini ./alembic.ini
 COPY --chown=app tests ./tests
-COPY requirements.txt ./requirements.txt
-COPY alembic.ini ./alembic.ini
-COPY cli.py ./cli.py
-COPY bin/entrypoint.sh ./entrypoint.sh
-COPY bin/wait-for-it.sh ./wait-for-it.sh
+COPY --chown=app requirements.txt ./requirements.txt
+COPY --chown=app alembic.ini ./alembic.ini
+COPY --chown=app cli.py ./cli.py
+COPY --chown=app bin/entrypoint.sh ./entrypoint.sh
+COPY --chown=app bin/wait-for-it.sh ./wait-for-it.sh
 
 ## install sudoers and enable sudo without password prompt
 
 RUN chmod +x ./entrypoint.sh ./wait-for-it.sh && \
 	apk add sudo && \
 	sed -e 's/^# \(%wheel.*NOPASSWD*\)/\1/g' -i /etc/sudoers && \
-	addgroup app wheel
-
-## install postgresql and mysql connectors
-
-RUN ls -ltr && \
+	addgroup app wheel && \
 	apk add -u gcc musl-dev postgresql-client \
 				mariadb-client mariadb-dev mariadb-connector-c-dev \
-				libffi-dev curl 
-
-ENV PATH="${PATH}:/home/app/.local/bin"
-
-## install nginx
-
-RUN apk update && \
-	apk add nginx --no-cache && \
-	adduser -D -g 'www' www && \
-	mkdir -p /www && \
-	chown -R www:www /var/lib/nginx && \
-	chown -R www:www /www && \
-	mkdir -p /run/nginx/ /var/log/gunicorn/ && \
+				libffi-dev curl && \
+	mkdir -p /var/log/gunicorn/ && \
 	chown app:app /var/log/gunicorn/
 
-
-COPY --chown=www docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --chown=www docker/nginx/index.html /www/index.html
-# COPY --chown=app docker/wsgi /etc/wsgi
-
-## install rsyslog
-
-WORKDIR /etc/apk/keys 
-##RUN echo 'http://alpine.adiscon.com/3.7/stable' >> /etc/apk/repositories
-##RUN wget http://alpine.adiscon.com/rsyslog@lists.adiscon.com-5a55e598.rsa.pub && \
-RUN	apk update && \
-	apk add rsyslog g++
-
-## install openrc
-
-RUN apk add util-linux openrc
-VOLUME /sys/fs/cgroup
-RUN rc-update add rsyslog default && \
-	mkdir -p /run/openrc && \
-	touch /run/openrc/softlevel && \
-	chown :app /etc/rc.conf  && \
-	chmod 0674 /etc/rc.conf
+ENV PATH="${PATH}:/home/app/.local/bin"
 
 ## install python pandas and additional packages
 
@@ -78,17 +43,9 @@ RUN for x in $(echo "main community testing"); \
 	pip3 install --upgrade pip 
 
 # pip3 install poetry
-	
-
-## install nodejs and npm
-
-RUN apk update && apk add nodejs npm
-#WORKDIR ${APP_DIR}
-##RUN npm install
 
 USER app
 WORKDIR ${APP_DIR}
-# RUN mkdir -p media/{xls,pdf,uploads}	
 ENV PYTHONPATH="/usr/lib/python3.12/site-packages/"
 
 

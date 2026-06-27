@@ -20,6 +20,7 @@ from app.db.models import (
     User,
     Author,
 )
+from app.db.redis_client import redis_client
 from app.oauth2 import get_current_active_user
 
 
@@ -123,6 +124,17 @@ async def book_create(
     for item in items_to_create:
         db.refresh(item)
 
+    # Publish creation events to Redis
+    for item in items_to_create:
+        try:
+            redis_client.publish({
+                "action": "create",
+                "book_id": item.id,
+                "name": item.name,
+            })
+        except Exception as e:
+            print(f"Redis publish failed (create): {e}")
+
     return (
         items_to_create if len(items_to_create) > 1
         else items_to_create[0]
@@ -161,6 +173,17 @@ async def book_update(
 
     db.commit()
     db.refresh(instance)
+
+    # Publish update event to Redis
+    try:
+        redis_client.publish({
+            "action": "update",
+            "book_id": instance.id,
+            "name": instance.name,
+        })
+    except Exception as e:
+        print(f"Redis publish failed (update): {e}")
+
     print(f"Book successfully updated bookId:{book_id}")
     return instance
 

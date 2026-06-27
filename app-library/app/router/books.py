@@ -114,6 +114,9 @@ async def book_create(
             active=item.active,
             category_id=item.category_id,
             author_id=item.author_id,
+            description=item.description,
+            image=item.image,
+            price=item.price,
             created_by_id=current_user.id,
         )
         db.add(db_instance)

@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, DateTime,
-    Boolean, ForeignKey, Select,
+    Boolean, ForeignKey, Select, Numeric,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
@@ -146,6 +146,9 @@ class Book(BaseStructure):
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
     author_id = Column(Integer, ForeignKey("authors.id"), nullable=False)
     active = Column(Boolean, nullable=False, default=True)
+    description = Column(String(200), nullable=True, default=None)
+    image = Column(String(500), nullable=True, default=None)
+    price = Column(Numeric(12, 3), nullable=True, default=0)
 
     # relationships
     created_by = relationship("User", back_populates="books")

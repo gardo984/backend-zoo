@@ -1,6 +1,8 @@
 
+import re
 from datetime import datetime
 from typing import Optional, Dict
+from decimal import Decimal
 from pydantic import (
     BaseModel,
     EmailStr,
@@ -145,12 +147,30 @@ class CategoryResponse(CategoryDetail):
 class BookBase(BaseModel):
     name: str
     active: bool
+    description: Optional[str] = None
+    image: Optional[str] = None
+    price: Optional[Decimal] = Decimal('0.000')
 
 
 class BookCreate(BookBase):
     author_id: int
     category_id: int
     active: Optional[bool] = True
+    description: Optional[str] = None
+    image: Optional[str] = None
+    price: Optional[Decimal] = Decimal('0.000')
+
+    @field_validator("image")
+    @classmethod
+    def validate_image_path(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        pattern = r"^\/?(?:[^\/\0]+\/)*[^\/\0]+\.(png|jpe?g|webp)$"
+        if not re.match(pattern, value, re.IGNORECASE):
+            raise ValueError(
+                "Image must be a valid path with .png, .jpeg, or .webp extension"
+            )
+        return value
 
 
 class BookUpdate(BookCreate):

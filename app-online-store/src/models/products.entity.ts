@@ -24,11 +24,11 @@ export class Product {
 	@Column()
 	price: number;
 
-	@Column({ nullable: true })
-	category_id: number;
+	@Column({ length: 200, nullable: true })
+	category_description: string;
 
-	@Column({ nullable: true })
-	author_id: number;
+	@Column({ length: 200, nullable: true })
+	author_description: string;
 
 	@Column({ default: true })
 	active: boolean;
@@ -72,18 +72,18 @@ export class Product {
 		this.price = price;
 	}
 
-	getCategoryId(): number | null {
-		return this.category_id;
+	getCategoryDescription(): string | null {
+		return this.category_description;
 	}
-	setCategoryId(category_id: number | null) {
-		this.category_id = category_id;
+	setCategoryDescription(category_description: string | null) {
+		this.category_description = category_description;
 	}
 
-	getAuthorId(): number | null {
-		return this.author_id;
+	getAuthorDescription(): string | null {
+		return this.author_description;
 	}
-	setAuthorId(author_id: number | null) {
-		this.author_id = author_id;
+	setAuthorDescription(author_description: string | null) {
+		this.author_description = author_description;
 	}
 
 	isActive(): boolean {

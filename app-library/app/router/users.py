@@ -1,7 +1,8 @@
-
-from typing import List, Dict, Optional, Union
+from typing import List, Union
 from fastapi import (
-    Request, Response, status, HTTPException,
+    Request,
+    status,
+    HTTPException,
     Depends,
     APIRouter,
 )
@@ -11,17 +12,13 @@ from app.schemas import (
     UserResponse,
 )
 
-from app.db.database import get_db, engine
+from app.db.database import get_db
 from app.db.models import (
-    Base,
     User,
 )
 from app.oauth2 import get_current_active_user
 
-
-router = APIRouter(
-    tags=["Users"]
-)
+router = APIRouter(tags=["Users"])
 # users
 
 
@@ -32,27 +29,28 @@ router = APIRouter(
 )
 async def user_create(
     request: Request,
-    payload: Union[UserCreate | List[UserCreate]],
+    payload: Union[UserCreate, List[UserCreate]],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     print(f"Url: {request.url}, method: {request.method}")
-    users_to_create: List[User] = []
     if not isinstance(payload, List):
         payload = [payload]
 
     decoded_data = [item.model_dump() for item in payload]
     print(f"Payload: {decoded_data}")
-    user_list = list(set([x.email.lower() for x in payload]))
+    user_list = list({x.email.lower() for x in payload})
     user_exists = User.validate_users_existence(db, user_list)
     if user_exists:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Users already registered: {','.join(user_exists)}"
+            detail=f"Users already registered: {','.join(user_exists)}",
         )
 
     created_users: List[User] = User.create_users(
-        db=db, users=payload, current_user=current_user,
+        db=db,
+        users=payload,
+        current_user=current_user,
     )
     return created_users
 
@@ -113,7 +111,7 @@ async def user_delete(
     if not stmt.first():
         print(f"User does not exist userId:{user_id}")
         raise HTTPException(
-            detail=f"User does not exist",
+            detail="User does not exist",
             status_code=status.HTTP_404_NOT_FOUND,
         )
 

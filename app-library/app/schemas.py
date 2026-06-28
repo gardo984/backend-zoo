@@ -1,4 +1,3 @@
-
 import re
 from datetime import datetime
 from typing import Optional, Dict
@@ -39,7 +38,7 @@ class AuthorResponse(AuthorBase):
     id: int
     created_at: datetime
 
-    @field_serializer('created_at')
+    @field_serializer("created_at")
     def date_format(self, value: datetime) -> str:
         return value.strftime("%Y-%m-%d %T")
 
@@ -57,6 +56,7 @@ class Book(BaseModel):
     year: int
     published: bool = True
     expired: Optional[bool] = False
+
 
 # users
 
@@ -113,6 +113,7 @@ class LoginResponse(BaseModel):
 
 # category
 
+
 class CategoryBase(BaseModel):
     name: str
     active: Optional[bool] = True
@@ -137,9 +138,10 @@ class CategoryResponse(CategoryDetail):
     created_at: datetime
     created_by: Optional[UserDetail]
 
-    @field_serializer('created_at')
+    @field_serializer("created_at")
     def date_format(self, value: datetime) -> str:
         return value.strftime("%Y-%m-%d %T")
+
 
 # books
 
@@ -149,7 +151,7 @@ class BookBase(BaseModel):
     active: bool
     description: Optional[str] = None
     image: Optional[str] = None
-    price: Optional[Decimal] = Decimal('0.000')
+    price: Optional[Decimal] = Decimal("0.000")
 
 
 class BookCreate(BookBase):
@@ -158,7 +160,7 @@ class BookCreate(BookBase):
     active: Optional[bool] = True
     description: Optional[str] = None
     image: Optional[str] = None
-    price: Optional[Decimal] = Decimal('0.000')
+    price: Optional[Decimal] = Decimal("0.000")
 
     @field_validator("image")
     @classmethod
@@ -186,6 +188,6 @@ class BookResponse(BookBase):
     created_at: datetime
     created_by: Optional[UserDetail]
 
-    @field_serializer('created_at')
+    @field_serializer("created_at")
     def date_format(self, value: datetime) -> str:
         return value.strftime("%Y-%m-%d %T")

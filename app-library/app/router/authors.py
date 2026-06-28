@@ -1,6 +1,8 @@
-from typing import List, Dict, Optional, Union
+from typing import List, Union
 from fastapi import (
-    Request, Response, status, HTTPException,
+    Request,
+    status,
+    HTTPException,
     Depends,
     APIRouter,
 )
@@ -11,18 +13,14 @@ from app.schemas import (
     AuthorResponse,
 )
 
-from app.db.database import get_db, engine
+from app.db.database import get_db
 from app.db.models import (
-    Base,
     Author,
     User,
 )
 from app.oauth2 import get_current_active_user
 
-
-router = APIRouter(
-    tags=["Authors"]
-)
+router = APIRouter(tags=["Authors"])
 
 
 @router.get(
@@ -71,7 +69,7 @@ async def author_by_id(
 )
 async def author_create(
     request: Request,
-    payload: Union[AuthorCreate | List[AuthorCreate]],
+    payload: Union[AuthorCreate, List[AuthorCreate]],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -144,7 +142,9 @@ async def author_update(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def author_delete(
-    request: Request, author_id: int, db: Session = Depends(get_db),
+    request: Request,
+    author_id: int,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     print(f"Url: {request.url}, method: {request.method}")
@@ -154,7 +154,7 @@ async def author_delete(
     if not author:
         print(f"Author does not exist authorId:{author_id}")
         raise HTTPException(
-            detail=f"Book does not exist",
+            detail="Book does not exist",
             status_code=status.HTTP_404_NOT_FOUND,
         )
 

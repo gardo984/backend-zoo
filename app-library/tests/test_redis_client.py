@@ -1,4 +1,3 @@
-import pytest
 from app.db.redis_client import RedisClient
 
 
@@ -9,11 +8,13 @@ class TestRedisClient:
         client = RedisClient()
         try:
             client.connect()
-            client.publish({
-                "action": "test",
-                "book_id": 0,
-                "name": "test_book",
-            })
+            client.publish(
+                {
+                    "action": "test",
+                    "book_id": 0,
+                    "name": "test_book",
+                }
+            )
             assert True  # No exception = success
         finally:
             client.close()

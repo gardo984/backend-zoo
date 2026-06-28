@@ -10,10 +10,7 @@ class AppFixtures:
     @pytest.fixture()
     def load_categories(self, db_session) -> List[int]:
         fake = Faker()
-        items_to_create = [
-            Category(name=fake.name(), active=True)
-            for _ in range(10)
-        ]
+        items_to_create = [Category(name=fake.name(), active=True) for _ in range(10)]
         db_session.add_all(items_to_create)
         db_session.commit()
         for instance in items_to_create:
@@ -42,15 +39,20 @@ class AppFixtures:
 class TestMain:
 
     @pytest.mark.parametrize(
-        "method, status_code", [
+        "method, status_code",
+        [
             ("get", status.HTTP_200_OK),
             ("post", status.HTTP_405_METHOD_NOT_ALLOWED),
             ("put", status.HTTP_405_METHOD_NOT_ALLOWED),
             ("delete", status.HTTP_405_METHOD_NOT_ALLOWED),
             ("head", status.HTTP_405_METHOD_NOT_ALLOWED),
-        ])
+        ],
+    )
     def test_main_endpoint(
-        self, client, method, status_code,
+        self,
+        client,
+        method,
+        status_code,
     ):
         method = getattr(client, method)
         response = method("/")

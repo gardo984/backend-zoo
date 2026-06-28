@@ -1,6 +1,8 @@
-from typing import List, Dict, Optional, Union
+from typing import List, Union
 from fastapi import (
-    Request, Response, status, HTTPException,
+    Request,
+    status,
+    HTTPException,
     Depends,
     APIRouter,
 )
@@ -12,9 +14,8 @@ from app.schemas import (
     BookResponse,
 )
 
-from app.db.database import get_db, engine
+from app.db.database import get_db
 from app.db.models import (
-    Base,
     Book,
     Category,
     User,
@@ -23,11 +24,7 @@ from app.db.models import (
 from app.db.redis_client import redis_client
 from app.oauth2 import get_current_active_user
 
-
-router = APIRouter(
-    prefix="/books",
-    tags=["Books"]
-)
+router = APIRouter(prefix="/books", tags=["Books"])
 
 
 @router.get(
@@ -47,14 +44,13 @@ async def book_list(
     print(f"querystring: {dict(request.query_params)}")
 
     if sorted_by not in inspect(Book).columns:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Invalid sorted field: {sorted_by}",)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid sorted field: {sorted_by}",
+        )
 
     sorted_field = getattr(Book, sorted_by)
-    books = (
-        db.query(Book).order_by(sorted_field)
-        .limit(limit).offset(offset)
-    )
+    books = db.query(Book).order_by(sorted_field).limit(limit).offset(offset)
     return books
 
 
@@ -88,7 +84,7 @@ async def book_by_id(
 )
 async def book_create(
     request: Request,
-    payload: Union[BookCreate | List[BookCreate]],
+    payload: Union[BookCreate, List[BookCreate]],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -103,12 +99,16 @@ async def book_create(
         category_instance = Category.validate_existence(item.category_id, db)
         author_instance = Author.validate_existence(item.author_id, db)
         if not category_instance:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"Invalid category_id: {category_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid category_id: {item.category_id}",
+            )
 
         if not author_instance:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail=f"Invalid author_id: {author_id}",)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid author_id: {item.author_id}",
+            )
 
         db_instance = Book(
             name=item.name,
@@ -130,23 +130,24 @@ async def book_create(
     # Publish creation events to Redis
     for item in items_to_create:
         try:
-            redis_client.publish({
-                "id": item.id,
-                "name": item.name,
-                "category_description": item.category.name if item.category else None,
-                "author_description": item.author.name if item.author else None,
-                "active": item.active,
-                "description": item.description,
-                "image": item.image,
-                "price": float(item.price) if item.price else 0.0,
-            })
+            redis_client.publish(
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "category_description": (
+                        item.category.name if item.category else None
+                    ),
+                    "author_description": item.author.name if item.author else None,
+                    "active": item.active,
+                    "description": item.description,
+                    "image": item.image,
+                    "price": float(item.price) if item.price else 0.0,
+                }
+            )
         except Exception as e:
             print(f"Redis publish failed (create): {e}")
 
-    return (
-        items_to_create if len(items_to_create) > 1
-        else items_to_create[0]
-    )
+    return items_to_create if len(items_to_create) > 1 else items_to_create[0]
 
 
 @router.put(
@@ -184,16 +185,20 @@ async def book_update(
 
     # Publish update event to Redis
     try:
-        redis_client.publish({
-            "id": instance.id,
-            "name": instance.name,
-            "category_description": instance.category.name if instance.category else None,
-            "author_description": instance.author.name if instance.author else None,
-            "active": instance.active,
-            "description": instance.description,
-            "image": instance.image,
-            "price": float(instance.price) if instance.price else 0.0,
-        })
+        redis_client.publish(
+            {
+                "id": instance.id,
+                "name": instance.name,
+                "category_description": (
+                    instance.category.name if instance.category else None
+                ),
+                "author_description": instance.author.name if instance.author else None,
+                "active": instance.active,
+                "description": instance.description,
+                "image": instance.image,
+                "price": float(instance.price) if instance.price else 0.0,
+            }
+        )
     except Exception as e:
         print(f"Redis publish failed (update): {e}")
 
@@ -206,7 +211,9 @@ async def book_update(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def book_delete(
-    request: Request, book_id: int, db: Session = Depends(get_db),
+    request: Request,
+    book_id: int,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     print(f"Url: {request.url}, method: {request.method}")
@@ -216,7 +223,7 @@ async def book_delete(
     if not instance:
         print(f"Book does not exist bookId:{book_id}")
         raise HTTPException(
-            detail=f"Book does not exist",
+            detail="Book does not exist",
             status_code=status.HTTP_404_NOT_FOUND,
         )
 

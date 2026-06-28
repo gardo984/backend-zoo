@@ -32,28 +32,25 @@ class TestBooks(AppFixtures):
             db_session.refresh(instance)
         return [x.id for x in items_to_create]
 
-    def test_book_create(
-        self, client, db_session, load_categories, load_authors
-    ):
-        category = db_session.query(Category).where(
-            Category.id == load_categories[0]
-        ).first()
-        author = db_session.query(Author).where(
-            Author.id == load_authors[0]
-        ).first()
+    def test_book_create(self, client, db_session, load_categories, load_authors):
+        category = (
+            db_session.query(Category).where(Category.id == load_categories[0]).first()
+        )
+        author = db_session.query(Author).where(Author.id == load_authors[0]).first()
         assert category is not None
         assert author is not None
 
         client._authenticate()
         payload = dict(
-            name="The last penguin", category_id=category.id,
-            author_id=author.id, active=True,
+            name="The last penguin",
+            category_id=category.id,
+            author_id=author.id,
+            active=True,
             description="A thrilling tale of a penguin",
             image="/images/penguin.png",
             price=19.990,
         )
         response = client.post("/books/", json=payload)
-        outcome = response.json()
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_book_list(self, client, db_session, load_books):
@@ -73,15 +70,13 @@ class TestBooks(AppFixtures):
         assert len(books) > 0
 
         for item in books:
-            book_id = item.get('id')
+            book_id = item.get("id")
             response = client.get(f"/books/{book_id}/")
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["id"] == book_id
 
     def test_book_update(self, client, db_session, load_books):
-        book = db_session.query(Book).where(
-            Book.id == load_books[0]
-        ).first()
+        book = db_session.query(Book).where(Book.id == load_books[0]).first()
         assert book is not None
 
         client._authenticate()
@@ -96,21 +91,17 @@ class TestBooks(AppFixtures):
             price=29.990,
         )
         response = client.put(
-            f"/books/{book.id}/", json=payload,
+            f"/books/{book.id}/",
+            json=payload,
         )
-        outcome = response.json()
-
-        book = db_session.query(Book).where(
-            Book.id == book.id
-        ).first()
-        assert book is not None
         assert response.status_code == status.HTTP_200_OK
+
+        book = db_session.query(Book).where(Book.id == book.id).first()
+        assert book is not None
         assert book.active is False and book.name == new_name
 
     def test_book_delete(self, client, db_session, load_books):
-        book = db_session.query(Book).where(
-            Book.id == load_books[0]
-        ).first()
+        book = db_session.query(Book).where(Book.id == load_books[0]).first()
         assert book is not None
 
         book_id = book.id
@@ -118,9 +109,7 @@ class TestBooks(AppFixtures):
         response = client.delete(f"/books/{book_id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
-        book = db_session.query(Book).where(
-            Book.id == book_id
-        ).first()
+        book = db_session.query(Book).where(Book.id == book_id).first()
         assert book is None
 
         response = client.delete(f"/books/{book_id}/")

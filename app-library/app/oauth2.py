@@ -1,9 +1,8 @@
-
 import jwt
 from typing import Dict, Optional, Annotated
 from datetime import timedelta, datetime, timezone
 from jwt.exceptions import InvalidTokenError
-from fastapi import Request, Depends, status, HTTPException
+from fastapi import Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.db.models import User
@@ -18,22 +17,19 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(settings.jwt_expire_minutes)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def create_access_token(
-    data: Dict, expires_delta: timedelta | None = None
-) -> str:
+def create_access_token(data: Dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     if not expires_delta:
         expires_delta = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     expire = datetime.now(timezone.utc) + expires_delta
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        payload=to_encode, key=SECRET_KEY, algorithm=ALGORITHM
-    )
+    encoded_jwt = jwt.encode(payload=to_encode, key=SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
 def verify_access_token(
-    token: str, credentials_exception: HTTPException,
+    token: str,
+    credentials_exception: HTTPException,
 ) -> TokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -68,7 +64,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")

@@ -1,4 +1,3 @@
-
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings
@@ -6,13 +5,13 @@ from dotenv import load_dotenv
 
 
 def load_config_variables() -> None:
-    """ Function will double check if there is a file called .env_local,
+    """Function will double check if there is a file called .env_local,
     if so variables defined in it will be loaded.
     """
     # root_path: ./app-library
     root_path = os.path.dirname(os.path.abspath(__file__))
     # env_path: ./app-library/.env_local
-    env_path = os.path.join(root_path, '.env_local')
+    env_path = os.path.join(root_path, ".env_local")
     if os.path.exists(env_path):
         load_dotenv(env_path)
 

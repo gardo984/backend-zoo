@@ -1,6 +1,4 @@
-
 import pytest
-import json
 from typing import Dict, Any
 from fastapi.testclient import TestClient
 from fastapi import status
@@ -42,8 +40,7 @@ def engine():
 def db_session(engine):
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
-    TestSessionLocal = sessionmaker(
-        autocommit=False, autoflush=False, bind=engine)
+    TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = TestSessionLocal()
     yield db
     db.close()
@@ -66,9 +63,7 @@ class AuthenticatedClient(TestClient):
         response = self.post("/login/", json=payload)
         if response.status_code == status.HTTP_200_OK:
             self.access_token = response.json().get("access_token")
-            self.headers.update({
-                "Authorization": f"Bearer {self.access_token}"
-            })
+            self.headers.update({"Authorization": f"Bearer {self.access_token}"})
         return response.json()
 
     def request(self, method, *args, **kwargs):

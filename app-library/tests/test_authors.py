@@ -1,6 +1,4 @@
 import pytest
-from typing import List
-from faker import Faker
 from fastapi import status
 from app.db.models import Author
 from tests.test_main import AppFixtures
@@ -9,19 +7,29 @@ from tests.test_main import AppFixtures
 class TestAuthors(AppFixtures):
 
     @pytest.mark.parametrize(
-        "payload, status_code", [
-            (dict(
-                name="Author test", active=True,
-                age=20, email="test@test.com",
-            ), status.HTTP_201_CREATED),
+        "payload, status_code",
+        [
+            (
+                dict(
+                    name="Author test",
+                    active=True,
+                    age=20,
+                    email="test@test.com",
+                ),
+                status.HTTP_201_CREATED,
+            ),
             (dict(name=None, active=False), status.HTTP_422_UNPROCESSABLE_CONTENT),
-        ])
+        ],
+    )
     def test_author_create(
-        self, client, db_session, payload, status_code,
+        self,
+        client,
+        db_session,
+        payload,
+        status_code,
     ):
         client._authenticate()
         response = client.post("/author/", json=payload)
-        outcome = response.json()
         assert response.status_code == status_code
 
     def test_author_list(self, client, db_session, load_authors):
@@ -40,15 +48,13 @@ class TestAuthors(AppFixtures):
         assert len(authors) > 0
 
         for item in authors:
-            author_id = item.get('id')
+            author_id = item.get("id")
             response = client.get(f"/author/{author_id}/")
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["id"] == author_id
 
     def test_author_update(self, client, db_session, load_authors):
-        author = db_session.query(Author).where(
-            Author.id == load_authors[0]
-        ).first()
+        author = db_session.query(Author).where(Author.id == load_authors[0]).first()
         assert author is not None
 
         client._authenticate()
@@ -60,21 +66,17 @@ class TestAuthors(AppFixtures):
             active=(not author.active),
         )
         response = client.put(
-            f"/author/{author.id}/", json=payload,
+            f"/author/{author.id}/",
+            json=payload,
         )
-        outcome = response.json()
-
-        author = db_session.query(Author).where(
-            Author.id == author.id
-        ).first()
-        assert author is not None
         assert response.status_code == status.HTTP_200_OK
+
+        author = db_session.query(Author).where(Author.id == author.id).first()
+        assert author is not None
         assert author.active is False and author.name == new_name
 
     def test_author_delete(self, client, db_session, load_authors):
-        author = db_session.query(Author).where(
-            Author.id == load_authors[0]
-        ).first()
+        author = db_session.query(Author).where(Author.id == load_authors[0]).first()
         assert author is not None
 
         author_id = author.id
@@ -82,9 +84,7 @@ class TestAuthors(AppFixtures):
         response = client.delete(f"/author/{author_id}/")
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
-        author = db_session.query(Author).where(
-            Author.id == author_id
-        ).first()
+        author = db_session.query(Author).where(Author.id == author_id).first()
         assert author is None
 
         response = client.delete(f"/author/{author_id}/")

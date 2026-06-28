@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Pre-commit hook for app-library
+# Runs black (auto-format) and flake8 (lint check) on staged Python files
+# within the app-library directory.
+#
+
+set -e
+
+APP_LIBRARY_DIR="app-library"
+
+echo "🔍 Running pre-commit checks for $APP_LIBRARY_DIR..."
+
+# Find staged Python files inside app-library
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep "^${APP_LIBRARY_DIR}/.*\.py$" || true)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "✅ No Python files staged in $APP_LIBRARY_DIR — skipping."
+    exit 0
+fi
+
+# Determine the repo root
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+# Check if black is available
+BLACK_CMD=""
+if command -v black &>/dev/null; then
+    BLACK_CMD="black"
+elif [ -f "$REPO_ROOT/$APP_LIBRARY_DIR/.venv/bin/black" ]; then
+    BLACK_CMD="$REPO_ROOT/$APP_LIBRARY_DIR/.venv/bin/black"
+elif [ -f ".venv/bin/black" ]; then
+    BLACK_CMD=".venv/bin/black"
+else
+    echo "⚠️  black not found — skipping auto-format. Install with: pip install black"
+fi
+
+if [ -n "$BLACK_CMD" ]; then
+    echo "🎨 Auto-formatting with black..."
+    echo "$STAGED_FILES" | xargs $BLACK_CMD --quiet 2>&1 || true
+    # Re-stage files that black may have modified
+    echo "$STAGED_FILES" | xargs git add 2>/dev/null || true
+fi
+
+# Check if flake8 is available
+FLAKE8_CMD=""
+if command -v flake8 &>/dev/null; then
+    FLAKE8_CMD="flake8"
+elif [ -f "$REPO_ROOT/$APP_LIBRARY_DIR/.venv/bin/flake8" ]; then
+    FLAKE8_CMD="$REPO_ROOT/$APP_LIBRARY_DIR/.venv/bin/flake8"
+elif [ -f ".venv/bin/flake8" ]; then
+    FLAKE8_CMD=".venv/bin/flake8"
+else
+    echo "⚠️  flake8 not found — skipping lint check. Install with: pip install flake8"
+    exit 0
+fi
+
+echo "🔎 Linting with flake8..."
+# Strip app-library/ prefix and run flake8 from within app-library
+# to pick up its .flake8 config
+FLAKE8_FILES=$(echo "$STAGED_FILES" | sed "s|^${APP_LIBRARY_DIR}/||")
+FLAKE8_OUTPUT=$(cd "$APP_LIBRARY_DIR" && echo "$FLAKE8_FILES" | xargs $FLAKE8_CMD 2>&1) || {
+    echo "❌ flake8 found issues:"
+    echo "$FLAKE8_OUTPUT"
+    echo ""
+    echo "Please fix the issues above and re-stage the files before committing."
+    exit 1
+}
+
+echo "✅ All checks passed!"

@@ -24,7 +24,6 @@ from app.db.models import (
 from app.db.redis_client import redis_client
 from app.oauth2 import get_current_active_user
 
-
 router = APIRouter(prefix="/books", tags=["Books"])
 
 

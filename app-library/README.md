@@ -103,36 +103,41 @@ pytest -v tests/
 
 ## Git Hooks
 
-This project includes **pre-commit hooks** configured via `.githooks/` to automatically format and lint Python code in `app-library/`.
+This project uses [pre-commit](https://pre-commit.com/) to automatically format and lint Python code in `app-library/` on every commit.
 
-### Automatic Setup
-
-The hooks are automatically enabled when you clone the repository (the project uses `core.hooksPath = .githooks`).
-
-If you need to enable them manually:
+### Installation
 
 ```sh
 # From the repo root
-git config core.hooksPath .githooks
+pip install pre-commit
+pre-commit install
 ```
 
-### What the pre-commit hook does
+The hooks will now run automatically on `git commit`.
+
+### What the hooks do
 
 1. **Black** — Auto-formats all staged `.py` files inside `app-library/`.
 2. **Flake8** — Lints the same files and prevents the commit if issues are found.
 
-### Running tools manually
+### Running manually
 
 ```sh
-# Format all Python files
-cd app-library && black app/ tests/ cli.py alembic/
+# Run against all files
+pre-commit run --all-files
 
-# Lint all Python files
-cd app-library && flake8 app/ tests/ cli.py alembic/
+# Run against staged files only
+pre-commit run
 ```
 
 ### Bypassing the hook (emergency only)
 
 ```sh
 git commit --no-verify -m "your message"
+```
+
+### Updating hook versions
+
+```sh
+pre-commit autoupdate
 ```

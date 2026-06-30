@@ -13,6 +13,8 @@ Glossary:
 		- [Initialize app](#initialize-app)
 		- [DB Migrations](#db-migrations)
 - [Unit Tests](#unit-tests)
+- [Redis CLI](#redis-cli)
+- [Git Hooks](#git-hooks)
 
 ## Setup
 
@@ -100,6 +102,26 @@ alembic history
 pytest -v tests/
 ```
 ![Unit tests Outcome](others/unit-tests.png)
+
+## Redis CLI
+
+- To monitor:
+```sh
+docker-compose exec redis redis-cli monitor
+```
+- To publish a msg to a channel (for testing purposes):
+```sh
+docker-compose exec redis redis-cli publish book_updates '{"msg": "hello world"}'
+```
+- To get the list of active channels (the ones that have subscribers):
+```sh
+docker-compose exec redis redis-cli pubsub channels
+```
+- To subscribe to a channel:
+```sh
+docker-compose exec redis redis-cli subscribe book_updates
+```
+
 
 ## Git Hooks
 

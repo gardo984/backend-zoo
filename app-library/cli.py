@@ -1,4 +1,6 @@
 import typer
+from random import random
+from decimal import Decimal
 from typing import List
 from app.db.database import SessionLocal
 from app.db.models import (
@@ -40,7 +42,8 @@ def _load_random_users():
 
     items_to_create: List[User] = []
     for item in range(20):
-        hashed_password = User.get_password_hash("".join(fake.random_letters()))
+        hashed_password = User.get_password_hash(
+            "".join(fake.random_letters()))
         db_user = User(
             email=fake.email(),
             password=hashed_password,
@@ -104,6 +107,8 @@ def _load_books():
             author_id=author.id,
             active=True,
             created_by_id=current_user.id,
+            description=fake.text(),
+            price=round(Decimal((random() * 1000) + 1), 3),
         )
         items_to_create.append(db_book)
 

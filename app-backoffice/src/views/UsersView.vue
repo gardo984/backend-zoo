@@ -27,6 +27,13 @@ async function handleSearch() {
   await loadUsers()
 }
 
+async function handleClear() {
+  searchTerm.value = ''
+  statusFilter.value = 'all'
+  offset.value = 0
+  await loadUsers()
+}
+
 function handleSearchKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') handleSearch()
 }
@@ -151,6 +158,7 @@ async function handleDelete(user: UserResponse) {
         @keydown="handleSearchKeydown"
       />
       <button class="btn btn-primary" @click="handleSearch">Search</button>
+      <button class="btn btn-secondary" @click="handleClear">Clear</button>
     </div>
 
     <div class="filter-row">

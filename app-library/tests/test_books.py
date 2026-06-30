@@ -107,6 +107,56 @@ class TestBooks(AppFixtures):
         assert response.status_code == status.HTTP_200_OK
         assert book.active is False and book.name == new_name
 
+    def test_book_list_search_by_name(self, client, db_session, load_books):
+        client._authenticate()
+        response = client.get("/books/")
+        books = response.json()
+        first_name = books[0]["name"]
+        prefix = first_name[:5]
+
+        response = client.get(f"/books/?search={prefix}")
+        matching = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(prefix.lower() in b["name"].lower() for b in matching)
+        assert len(matching) <= len(books)
+
+    def test_book_list_search_by_id(self, client, db_session, load_books):
+        client._authenticate()
+        response = client.get("/books/")
+        books = response.json()
+        target_id = str(books[0]["id"])
+
+        response = client.get(f"/books/?search={target_id}")
+        matching = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert any(b["id"] == int(target_id) for b in matching)
+
+    def test_book_list_filter_by_status(self, client, db_session, load_books):
+        client._authenticate()
+        response = client.get("/books/?status=true")
+        active = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(b["active"] is True for b in active)
+
+        response = client.get("/books/?status=false")
+        inactive = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(b["active"] is False for b in inactive)
+
+    def test_book_list_search_and_status(self, client, db_session, load_books):
+        client._authenticate()
+        response = client.get("/books/")
+        books = response.json()
+        first_name = books[0]["name"]
+        prefix = first_name[:5]
+
+        response = client.get(f"/books/?search={prefix}&status=true")
+        matching = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        for b in matching:
+            assert b["active"] is True
+            assert prefix.lower() in b["name"].lower()
+
     def test_book_delete(self, client, db_session, load_books):
         book = db_session.query(Book).where(
             Book.id == load_books[0]

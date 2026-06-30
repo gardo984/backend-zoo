@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from fastapi import (
     Request,
     status,
@@ -70,10 +70,7 @@ async def category_list(
         query = query.filter(Category.active == status_filter)
 
     sorted_field = getattr(Category, sorted_by)
-    items = (
-        query.order_by(sorted_field)
-        .limit(limit).offset(offset)
-    )
+    items = query.order_by(sorted_field).limit(limit).offset(offset)
     return items
 
 

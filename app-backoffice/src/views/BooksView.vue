@@ -12,25 +12,42 @@ const authors = ref<AuthorResponse[]>([])
 const loading = ref(false)
 
 const searchTerm = ref('')
-const searchQuery = ref('')
+const statusFilter = ref<'all' | 'true' | 'false'>('all')
+const offset = ref(0)
+const ITEMS_PER_PAGE = 20
 
-const displayBooks = computed(() => {
-  const last20 = books.value.slice(-20)
-  if (!searchQuery.value) return last20
-  const q = searchQuery.value.toLowerCase()
-  return last20.filter(b =>
-    b.name.toLowerCase().includes(q) ||
-    b.category.name.toLowerCase().includes(q) ||
-    b.author.name.toLowerCase().includes(q)
-  )
-})
+const hasPrevious = computed(() => offset.value > 0)
+const hasNext = computed(() => books.value.length === ITEMS_PER_PAGE)
 
-function handleSearch() {
-  searchQuery.value = searchTerm.value
+function buildParams() {
+  const params: Record<string, any> = { offset: offset.value }
+  if (searchTerm.value) params.search = searchTerm.value
+  if (statusFilter.value !== 'all') params.status = statusFilter.value === 'true'
+  return params
+}
+
+async function handleSearch() {
+  offset.value = 0
+  await loadBooks()
 }
 
 function handleSearchKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') handleSearch()
+}
+
+async function handleStatusChange() {
+  offset.value = 0
+  await loadBooks()
+}
+
+async function goNext() {
+  offset.value += ITEMS_PER_PAGE
+  await loadBooks()
+}
+
+async function goPrevious() {
+  offset.value = Math.max(0, offset.value - ITEMS_PER_PAGE)
+  await loadBooks()
 }
 const showModal = ref(false)
 
@@ -50,7 +67,7 @@ onMounted(async () => {
 async function loadBooks() {
   loading.value = true
   try {
-    books.value = await fetchBooks()
+    books.value = await fetchBooks(buildParams())
   } catch (err: any) {
     await Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.detail || 'Failed to load books.' })
   } finally {
@@ -156,7 +173,7 @@ async function handleDelete(b: BookResponse) {
       <button class="btn btn-primary" @click="openCreate">+ New Book</button>
     </div>
 
-    <!-- Search -->
+    <!-- Search + Status Filter -->
     <div class="search-bar">
       <input
         v-model="searchTerm"
@@ -168,11 +185,22 @@ async function handleDelete(b: BookResponse) {
       <button class="btn btn-primary" @click="handleSearch">Search</button>
     </div>
 
-    <div class="records-info">Last 20 records</div>
+    <div class="filter-row">
+      <select v-model="statusFilter" class="status-select" @change="handleStatusChange">
+        <option value="all">All</option>
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+
+    <div class="records-info">
+      Showing {{ offset + 1 }}–{{ offset + books.length }}
+      <span v-if="!hasNext"> (last page)</span>
+    </div>
 
     <div v-if="loading" class="loading">Loading…</div>
-    <div v-else-if="displayBooks.length === 0" class="empty">
-      {{ books.length === 0 ? 'No books found.' : 'No books match your search.' }}
+    <div v-else-if="books.length === 0" class="empty">
+      No books found.
     </div>
 
     <table v-else class="data-table">
@@ -188,7 +216,7 @@ async function handleDelete(b: BookResponse) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="b in displayBooks" :key="b.id">
+        <tr v-for="b in books" :key="b.id">
           <td>{{ b.id }}</td>
           <td>{{ b.name }}</td>
           <td>{{ b.category.name }}</td>
@@ -206,6 +234,12 @@ async function handleDelete(b: BookResponse) {
         </tr>
       </tbody>
     </table>
+
+    <!-- Pagination -->
+    <div class="pagination" v-if="books.length > 0">
+      <button class="btn btn-secondary btn-sm" :disabled="!hasPrevious" @click="goPrevious">← Previous</button>
+      <button class="btn btn-secondary btn-sm" :disabled="!hasNext" @click="goNext">Next →</button>
+    </div>
 
     <!-- Modal -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
@@ -294,6 +328,39 @@ async function handleDelete(b: BookResponse) {
   color: #64748b;
   margin-bottom: 0.75rem;
   font-weight: 500;
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.status-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+
+  &:focus {
+    border-color: #2a5298;
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .loading, .empty {

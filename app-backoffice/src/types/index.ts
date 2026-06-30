@@ -23,6 +23,12 @@ export interface UserCreate {
   password: string
 }
 
+export interface UserUpdate {
+  email?: string
+  password?: string
+  disabled?: boolean
+}
+
 export interface UserResponse extends User {
   created_by?: UserDetail | null
   created_at?: string

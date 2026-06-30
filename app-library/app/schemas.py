@@ -76,13 +76,28 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=100)
 
 
-class UserDetail(UserBase):
-    id: int
-    # created_at: datetime
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    password: Optional[str] = Field(default=None, min_length=8, max_length=100)
+    disabled: Optional[bool] = None
 
-    # @field_serializer('created_at')
-    # def date_format(self, value: datetime) -> str:
-    #     return value.strftime("%Y-%m-%d %T")
+    @field_validator("email", mode="before")
+    @classmethod
+    def lowercase(cls, value):
+        if isinstance(value, str):
+            return value.lower()
+        return value
+
+
+class UserDetail(UserBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    disabled: bool
+    created_at: datetime
+
+    @field_serializer("created_at")
+    def date_format(self, value: datetime) -> str:
+        return value.strftime("%Y-%m-%d %T")
 
     @model_serializer(mode="wrap")
     def serialize_model(
@@ -93,7 +108,6 @@ class UserDetail(UserBase):
 
 
 class UserResponse(UserDetail):
-    model_config = ConfigDict(from_attributes=True)
     created_by: Optional[UserDetail] = None
 
 

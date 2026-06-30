@@ -1,8 +1,16 @@
 import apiClient from './client'
 import type { BookCreate, BookResponse } from '../types'
 
-export async function fetchBooks(): Promise<BookResponse[]> {
-  const response = await apiClient.get<BookResponse[]>('/books/')
+export interface FetchBooksParams {
+  search?: string
+  status?: boolean
+  offset?: number
+}
+
+export async function fetchBooks(params?: FetchBooksParams): Promise<BookResponse[]> {
+  const response = await apiClient.get<BookResponse[]>('/books/', {
+    params: { ...params, limit: 20 },
+  })
   return response.data
 }
 

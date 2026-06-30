@@ -1,41 +1,63 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import Swal from 'sweetalert2'
-import { fetchUsers, createUser, deleteUser } from '../api/users'
-import type { UserResponse } from '../types'
+import { fetchUsers, createUser, updateUser, deleteUser } from '../api/users'
+import type { UserResponse, UserUpdate } from '../types'
 
 const users = ref<UserResponse[]>([])
 const loading = ref(false)
 
 const searchTerm = ref('')
-const searchQuery = ref('')
+const statusFilter = ref<'all' | 'true' | 'false'>('all')
+const offset = ref(0)
+const ITEMS_PER_PAGE = 20
 
-const displayUsers = computed(() => {
-  const last20 = users.value.slice(-20)
-  if (!searchQuery.value) return last20
-  const q = searchQuery.value.toLowerCase()
-  return last20.filter(u => u.email.toLowerCase().includes(q))
-})
+const hasPrevious = computed(() => offset.value > 0)
+const hasNext = computed(() => users.value.length === ITEMS_PER_PAGE)
 
-function handleSearch() {
-  searchQuery.value = searchTerm.value
+function buildParams() {
+  const params: Record<string, any> = { offset: offset.value }
+  if (searchTerm.value) params.search = searchTerm.value
+  if (statusFilter.value !== 'all') params.status = statusFilter.value === 'true'
+  return params
+}
+
+async function handleSearch() {
+  offset.value = 0
+  await loadUsers()
 }
 
 function handleSearchKeydown(e: KeyboardEvent) {
   if (e.key === 'Enter') handleSearch()
 }
 
+async function handleStatusChange() {
+  offset.value = 0
+  await loadUsers()
+}
+
+async function goNext() {
+  offset.value += ITEMS_PER_PAGE
+  await loadUsers()
+}
+
+async function goPrevious() {
+  offset.value = Math.max(0, offset.value - ITEMS_PER_PAGE)
+  await loadUsers()
+}
+
 const showModal = ref(false)
 const editEmail = ref('')
 const editPassword = ref('')
-const isEditing = ref(false)
+const editDisabled = ref(false)
+const editingId = ref<number | null>(null)
 
 onMounted(() => loadUsers())
 
 async function loadUsers() {
   loading.value = true
   try {
-    users.value = await fetchUsers()
+    users.value = await fetchUsers(buildParams())
   } catch (err: any) {
     await Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.detail || 'Failed to load users.' })
   } finally {
@@ -44,32 +66,50 @@ async function loadUsers() {
 }
 
 function openCreate() {
-  isEditing.value = false
+  editingId.value = null
   editEmail.value = ''
   editPassword.value = ''
+  editDisabled.value = false
+  showModal.value = true
+}
+
+function openEdit(u: UserResponse) {
+  editingId.value = u.id
+  editEmail.value = u.email
+  editPassword.value = ''
+  editDisabled.value = u.disabled
   showModal.value = true
 }
 
 function closeModal() {
   showModal.value = false
+  editingId.value = null
 }
 
 async function handleSave() {
-  if (!editEmail.value || !editPassword.value) {
-    await Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Email and password are required.' })
-    return
-  }
-  if (editPassword.value.length < 8) {
-    await Swal.fire({ icon: 'warning', title: 'Password too short', text: 'Password must be at least 8 characters.' })
+  if (!editEmail.value) {
+    await Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Email is required.' })
     return
   }
   try {
-    await createUser({ email: editEmail.value, password: editPassword.value })
-    await Swal.fire({ icon: 'success', title: 'Created', text: 'User created successfully.', timer: 1500, showConfirmButton: false })
+    if (editingId.value) {
+      const payload: UserUpdate = { email: editEmail.value }
+      if (editPassword.value) payload.password = editPassword.value
+      payload.disabled = editDisabled.value
+      await updateUser(editingId.value, payload)
+      await Swal.fire({ icon: 'success', title: 'Updated', timer: 1500, showConfirmButton: false })
+    } else {
+      if (!editPassword.value || editPassword.value.length < 8) {
+        await Swal.fire({ icon: 'warning', title: 'Password too short', text: 'Password must be at least 8 characters.' })
+        return
+      }
+      await createUser({ email: editEmail.value, password: editPassword.value })
+      await Swal.fire({ icon: 'success', title: 'Created', text: 'User created successfully.', timer: 1500, showConfirmButton: false })
+    }
     closeModal()
     await loadUsers()
   } catch (err: any) {
-    await Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.detail || 'Failed to create user.' })
+    await Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.detail || 'Operation failed.' })
   }
 }
 
@@ -101,7 +141,7 @@ async function handleDelete(user: UserResponse) {
       <button class="btn btn-primary" @click="openCreate">+ New User</button>
     </div>
 
-    <!-- Search -->
+    <!-- Search + Status Filter -->
     <div class="search-bar">
       <input
         v-model="searchTerm"
@@ -113,12 +153,23 @@ async function handleDelete(user: UserResponse) {
       <button class="btn btn-primary" @click="handleSearch">Search</button>
     </div>
 
-    <div class="records-info">Last 20 records</div>
+    <div class="filter-row">
+      <select v-model="statusFilter" class="status-select" @change="handleStatusChange">
+        <option value="all">All</option>
+        <option value="true">Disabled</option>
+        <option value="false">Enabled</option>
+      </select>
+    </div>
+
+    <div class="records-info">
+      Showing {{ offset + 1 }}–{{ offset + users.length }}
+      <span v-if="!hasNext"> (last page)</span>
+    </div>
 
     <div v-if="loading" class="loading">Loading…</div>
 
-    <div v-else-if="displayUsers.length === 0" class="empty">
-      {{ users.length === 0 ? 'No users found.' : 'No users match your search.' }}
+    <div v-else-if="users.length === 0" class="empty">
+      No users found.
     </div>
 
     <table v-else class="data-table">
@@ -131,7 +182,7 @@ async function handleDelete(user: UserResponse) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="user in displayUsers" :key="user.id">
+        <tr v-for="user in users" :key="user.id">
           <td>{{ user.id }}</td>
           <td>{{ user.email }}</td>
           <td>
@@ -140,27 +191,40 @@ async function handleDelete(user: UserResponse) {
             </span>
           </td>
           <td class="actions">
+            <button class="btn btn-primary btn-sm" @click="openEdit(user)">Edit</button>
             <button class="btn btn-danger btn-sm" @click="handleDelete(user)">Delete</button>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- Create Modal -->
+    <!-- Pagination -->
+    <div class="pagination" v-if="users.length > 0">
+      <button class="btn btn-secondary btn-sm" :disabled="!hasPrevious" @click="goPrevious">← Previous</button>
+      <button class="btn btn-secondary btn-sm" :disabled="!hasNext" @click="goNext">Next →</button>
+    </div>
+
+    <!-- Create / Edit Modal -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
-        <h3>New User</h3>
+        <h3>{{ editingId ? 'Edit User' : 'New User' }}</h3>
         <div class="field">
           <label>Email</label>
           <input v-model="editEmail" type="email" placeholder="user@example.com" />
         </div>
         <div class="field">
-          <label>Password</label>
-          <input v-model="editPassword" type="password" placeholder="Min 8 characters" />
+          <label>Password <span v-if="editingId" class="text-muted">(leave blank to keep)</span></label>
+          <input v-model="editPassword" type="password" :placeholder="editingId ? 'Optional' : 'Min 8 characters'" />
+        </div>
+        <div class="field checkbox-field">
+          <label>
+            <input v-model="editDisabled" type="checkbox" />
+            Disabled
+          </label>
         </div>
         <div class="modal-actions">
           <button class="btn btn-secondary" @click="closeModal">Cancel</button>
-          <button class="btn btn-primary" @click="handleSave">Create</button>
+          <button class="btn btn-primary" @click="handleSave">{{ editingId ? 'Update' : 'Create' }}</button>
         </div>
       </div>
     </div>
@@ -211,6 +275,45 @@ async function handleDelete(user: UserResponse) {
   color: #64748b;
   margin-bottom: 0.75rem;
   font-weight: 500;
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.status-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+
+  &:focus {
+    border-color: #2a5298;
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+:deep(.text-muted) {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #94a3b8;
 }
 
 .loading,

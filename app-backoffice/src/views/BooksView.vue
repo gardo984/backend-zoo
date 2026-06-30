@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Swal from 'sweetalert2'
 import { fetchBooks, createBook, updateBook, deleteBook } from '../api/books'
 import { fetchCategories } from '../api/categories'
@@ -10,6 +10,28 @@ const books = ref<BookResponse[]>([])
 const categories = ref<CategoryResponse[]>([])
 const authors = ref<AuthorResponse[]>([])
 const loading = ref(false)
+
+const searchTerm = ref('')
+const searchQuery = ref('')
+
+const displayBooks = computed(() => {
+  const last20 = books.value.slice(-20)
+  if (!searchQuery.value) return last20
+  const q = searchQuery.value.toLowerCase()
+  return last20.filter(b =>
+    b.name.toLowerCase().includes(q) ||
+    b.category.name.toLowerCase().includes(q) ||
+    b.author.name.toLowerCase().includes(q)
+  )
+})
+
+function handleSearch() {
+  searchQuery.value = searchTerm.value
+}
+
+function handleSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') handleSearch()
+}
 const showModal = ref(false)
 
 const editName = ref('')
@@ -134,8 +156,24 @@ async function handleDelete(b: BookResponse) {
       <button class="btn btn-primary" @click="openCreate">+ New Book</button>
     </div>
 
+    <!-- Search -->
+    <div class="search-bar">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Search by name, category or author…"
+        class="search-input"
+        @keydown="handleSearchKeydown"
+      />
+      <button class="btn btn-primary" @click="handleSearch">Search</button>
+    </div>
+
+    <div class="records-info">Last 20 records</div>
+
     <div v-if="loading" class="loading">Loading…</div>
-    <div v-else-if="books.length === 0" class="empty">No books found.</div>
+    <div v-else-if="displayBooks.length === 0" class="empty">
+      {{ books.length === 0 ? 'No books found.' : 'No books match your search.' }}
+    </div>
 
     <table v-else class="data-table">
       <thead>
@@ -150,7 +188,7 @@ async function handleDelete(b: BookResponse) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="b in books" :key="b.id">
+        <tr v-for="b in displayBooks" :key="b.id">
           <td>{{ b.id }}</td>
           <td>{{ b.name }}</td>
           <td>{{ b.category.name }}</td>
@@ -227,6 +265,35 @@ async function handleDelete(b: BookResponse) {
   align-items: center;
   margin-bottom: 1.5rem;
   h2 { margin: 0; color: #1e293b; }
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .search-input {
+    flex: 1;
+    max-width: 360px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+      border-color: #2a5298;
+      box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+    }
+  }
+}
+
+.records-info {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
 }
 
 .loading, .empty {

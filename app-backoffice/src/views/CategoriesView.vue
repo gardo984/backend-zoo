@@ -1,11 +1,29 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Swal from 'sweetalert2'
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from '../api/categories'
 import type { CategoryResponse } from '../types'
 
 const categories = ref<CategoryResponse[]>([])
 const loading = ref(false)
+
+const searchTerm = ref('')
+const searchQuery = ref('')
+
+const displayCategories = computed(() => {
+  const last20 = categories.value.slice(-20)
+  if (!searchQuery.value) return last20
+  const q = searchQuery.value.toLowerCase()
+  return last20.filter(c => c.name.toLowerCase().includes(q))
+})
+
+function handleSearch() {
+  searchQuery.value = searchTerm.value
+}
+
+function handleSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') handleSearch()
+}
 const showModal = ref(false)
 const editName = ref('')
 const editActive = ref(true)
@@ -91,8 +109,24 @@ async function handleDelete(cat: CategoryResponse) {
       <button class="btn btn-primary" @click="openCreate">+ New Category</button>
     </div>
 
+    <!-- Search -->
+    <div class="search-bar">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Search by name…"
+        class="search-input"
+        @keydown="handleSearchKeydown"
+      />
+      <button class="btn btn-primary" @click="handleSearch">Search</button>
+    </div>
+
+    <div class="records-info">Last 20 records</div>
+
     <div v-if="loading" class="loading">Loading…</div>
-    <div v-else-if="categories.length === 0" class="empty">No categories found.</div>
+    <div v-else-if="displayCategories.length === 0" class="empty">
+      {{ categories.length === 0 ? 'No categories found.' : 'No categories match your search.' }}
+    </div>
 
     <table v-else class="data-table">
       <thead>
@@ -104,7 +138,7 @@ async function handleDelete(cat: CategoryResponse) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="cat in categories" :key="cat.id">
+        <tr v-for="cat in displayCategories" :key="cat.id">
           <td>{{ cat.id }}</td>
           <td>{{ cat.name }}</td>
           <td>
@@ -155,6 +189,35 @@ async function handleDelete(cat: CategoryResponse) {
   margin-bottom: 1.5rem;
 
   h2 { margin: 0; color: #1e293b; }
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .search-input {
+    flex: 1;
+    max-width: 360px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+      border-color: #2a5298;
+      box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+    }
+  }
+}
+
+.records-info {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
 }
 
 .loading, .empty {

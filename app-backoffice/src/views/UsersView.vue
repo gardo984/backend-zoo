@@ -1,11 +1,29 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Swal from 'sweetalert2'
 import { fetchUsers, createUser, deleteUser } from '../api/users'
 import type { UserResponse } from '../types'
 
 const users = ref<UserResponse[]>([])
 const loading = ref(false)
+
+const searchTerm = ref('')
+const searchQuery = ref('')
+
+const displayUsers = computed(() => {
+  const last20 = users.value.slice(-20)
+  if (!searchQuery.value) return last20
+  const q = searchQuery.value.toLowerCase()
+  return last20.filter(u => u.email.toLowerCase().includes(q))
+})
+
+function handleSearch() {
+  searchQuery.value = searchTerm.value
+}
+
+function handleSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') handleSearch()
+}
 
 const showModal = ref(false)
 const editEmail = ref('')
@@ -83,9 +101,25 @@ async function handleDelete(user: UserResponse) {
       <button class="btn btn-primary" @click="openCreate">+ New User</button>
     </div>
 
+    <!-- Search -->
+    <div class="search-bar">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Search by email…"
+        class="search-input"
+        @keydown="handleSearchKeydown"
+      />
+      <button class="btn btn-primary" @click="handleSearch">Search</button>
+    </div>
+
+    <div class="records-info">Last 20 records</div>
+
     <div v-if="loading" class="loading">Loading…</div>
 
-    <div v-else-if="users.length === 0" class="empty">No users found.</div>
+    <div v-else-if="displayUsers.length === 0" class="empty">
+      {{ users.length === 0 ? 'No users found.' : 'No users match your search.' }}
+    </div>
 
     <table v-else class="data-table">
       <thead>
@@ -97,7 +131,7 @@ async function handleDelete(user: UserResponse) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="user in users" :key="user.id">
+        <tr v-for="user in displayUsers" :key="user.id">
           <td>{{ user.id }}</td>
           <td>{{ user.email }}</td>
           <td>
@@ -148,6 +182,35 @@ async function handleDelete(user: UserResponse) {
     margin: 0;
     color: #1e293b;
   }
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .search-input {
+    flex: 1;
+    max-width: 360px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+      border-color: #2a5298;
+      box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+    }
+  }
+}
+
+.records-info {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
 }
 
 .loading,

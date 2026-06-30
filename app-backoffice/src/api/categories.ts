@@ -1,8 +1,16 @@
 import apiClient from './client'
 import type { CategoryCreate, CategoryResponse } from '../types'
 
-export async function fetchCategories(): Promise<CategoryResponse[]> {
-  const response = await apiClient.get<CategoryResponse[]>('/categories/')
+export interface FetchCategoriesParams {
+  search?: string
+  status?: boolean
+  offset?: number
+}
+
+export async function fetchCategories(params?: FetchCategoriesParams): Promise<CategoryResponse[]> {
+  const response = await apiClient.get<CategoryResponse[]>('/categories/', {
+    params: { ...params, limit: 20 },
+  })
   return response.data
 }
 

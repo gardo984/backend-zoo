@@ -1,11 +1,13 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from fastapi import (
     Request,
     status,
     HTTPException,
     Depends,
     APIRouter,
+    Query,
 )
+from sqlalchemy import inspect, or_
 from sqlalchemy.orm import Session
 from app.schemas import (
     CategoryCreate,
@@ -32,10 +34,43 @@ async def category_list(
     request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
+    limit: int = 10,
+    offset: int = 0,
+    sorted_by: str = "id",
+    search: Optional[str] = Query(
+        None,
+        description="Search by name (partial match) or id (exact match)",
+    ),
+    status_filter: Optional[bool] = Query(
+        None,
+        alias="status",
+        description="Filter by active status: true or false",
+    ),
 ):
     print(f"Url: {request.url}, method: {request.method}")
     print(f"querystring: {dict(request.query_params)}")
-    items = db.query(Category).all()
+
+    if sorted_by not in inspect(Category).columns:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid sorted field: {sorted_by}",
+        )
+
+    query = db.query(Category)
+
+    if search is not None:
+        if search.isdigit():
+            query = query.filter(
+                or_(Category.name.ilike(f"%{search}%"), Category.id == int(search))
+            )
+        else:
+            query = query.filter(Category.name.ilike(f"%{search}%"))
+
+    if status_filter is not None:
+        query = query.filter(Category.active == status_filter)
+
+    sorted_field = getattr(Category, sorted_by)
+    items = query.order_by(sorted_field).limit(limit).offset(offset)
     return items
 
 

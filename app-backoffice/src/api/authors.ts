@@ -1,8 +1,16 @@
 import apiClient from './client'
 import type { AuthorCreate, AuthorResponse } from '../types'
 
-export async function fetchAuthors(): Promise<AuthorResponse[]> {
-  const response = await apiClient.get<AuthorResponse[]>('/author/')
+export interface FetchAuthorsParams {
+  search?: string
+  status?: boolean
+  offset?: number
+}
+
+export async function fetchAuthors(params?: FetchAuthorsParams): Promise<AuthorResponse[]> {
+  const response = await apiClient.get<AuthorResponse[]>('/author/', {
+    params: { ...params, limit: 20 },
+  })
   return response.data
 }
 

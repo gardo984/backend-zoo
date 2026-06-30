@@ -1,12 +1,13 @@
-from typing import List, Union
+from typing import List, Optional, Union
 from fastapi import (
     Request,
     status,
     HTTPException,
     Depends,
     APIRouter,
+    Query,
 )
-from sqlalchemy import inspect
+from sqlalchemy import inspect, or_
 from sqlalchemy.orm import Session
 from app.schemas import (
     BookCreate,
@@ -39,6 +40,15 @@ async def book_list(
     limit: int = 10,
     offset: int = 0,
     sorted_by: str = "id",
+    search: Optional[str] = Query(
+        None,
+        description="Search by name (partial match) or id (exact match)",
+    ),
+    status_filter: Optional[bool] = Query(
+        None,
+        alias="status",
+        description="Filter by active status: true or false",
+    ),
 ):
     print(f"Url: {request.url}, method: {request.method}")
     print(f"querystring: {dict(request.query_params)}")
@@ -49,8 +59,21 @@ async def book_list(
             detail=f"Invalid sorted field: {sorted_by}",
         )
 
+    query = db.query(Book)
+
+    if search is not None:
+        if search.isdigit():
+            query = query.filter(
+                or_(Book.name.ilike(f"%{search}%"), Book.id == int(search))
+            )
+        else:
+            query = query.filter(Book.name.ilike(f"%{search}%"))
+
+    if status_filter is not None:
+        query = query.filter(Book.active == status_filter)
+
     sorted_field = getattr(Book, sorted_by)
-    books = db.query(Book).order_by(sorted_field).limit(limit).offset(offset)
+    books = query.order_by(sorted_field).limit(limit).offset(offset)
     return books
 
 

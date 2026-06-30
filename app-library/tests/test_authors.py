@@ -75,6 +75,49 @@ class TestAuthors(AppFixtures):
         assert author is not None
         assert author.active is False and author.name == new_name
 
+    def test_author_list_search_by_name(self, client, db_session, load_authors):
+        client._authenticate()
+        response = client.get("/author/")
+        authors = response.json()
+        first_name = authors[0]["name"]
+        prefix = first_name[:5]
+
+        response = client.get(f"/author/?search={prefix}")
+        matching = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(prefix.lower() in a["name"].lower() for a in matching)
+        assert len(matching) <= len(authors)
+
+    def test_author_list_search_by_id(self, client, db_session, load_authors):
+        client._authenticate()
+        response = client.get("/author/")
+        authors = response.json()
+        target_id = str(authors[0]["id"])
+
+        response = client.get(f"/author/?search={target_id}")
+        matching = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert any(a["id"] == int(target_id) for a in matching)
+
+    def test_author_list_filter_by_status(self, client, db_session, load_authors):
+        client._authenticate()
+        response = client.get("/author/?status=true")
+        active = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(a["active"] is True for a in active)
+
+        response = client.get("/author/?status=false")
+        inactive = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(a["active"] is False for a in inactive)
+
+    def test_author_list_pagination(self, client, db_session, load_authors):
+        client._authenticate()
+        response = client.get("/author/?limit=3&offset=0")
+        data = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert len(data) <= 3
+
     def test_author_delete(self, client, db_session, load_authors):
         author = db_session.query(Author).where(Author.id == load_authors[0]).first()
         assert author is not None

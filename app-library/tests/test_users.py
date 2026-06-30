@@ -72,6 +72,59 @@ class TestUser:
             assert response.status_code == status.HTTP_200_OK
             assert response.json()["id"] == user_id
 
+    def test_user_list_search_by_email(self, client, db_session, load_users):
+        client._authenticate()
+        response = client.get("/users/")
+        users = response.json()
+        first_email = users[0]["email"]
+        prefix = first_email[:5]
+
+        response = client.get(f"/users/?search={prefix}")
+        matching = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(prefix.lower() in u["email"].lower() for u in matching)
+        assert len(matching) <= len(users)
+
+    def test_user_list_filter_by_status(self, client, db_session, load_users):
+        client._authenticate()
+        response = client.get("/users/?status=true")
+        disabled = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(u["disabled"] is True for u in disabled)
+
+        response = client.get("/users/?status=false")
+        active = response.json()
+        assert response.status_code == status.HTTP_200_OK
+        assert all(u["disabled"] is False for u in active)
+
+    def test_user_list_invalid_sorted_by(self, client, db_session, load_users):
+        client._authenticate()
+        response = client.get("/users/?sorted_by=invalid_field")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_user_update(self, client, db_session, load_users):
+        user_instance = db_session.query(User).where(User.id == load_users[0]).first()
+        assert user_instance is not None
+
+        client._authenticate()
+        new_email = f"updated.{user_instance.email}"
+        payload = dict(
+            email=new_email,
+            disabled=True,
+        )
+        response = client.put(
+            f"/users/{user_instance.id}/",
+            json=payload,
+        )
+
+        user_instance = (
+            db_session.query(User).where(User.id == user_instance.id).first()
+        )
+        assert user_instance is not None
+        assert response.status_code == status.HTTP_200_OK
+        assert user_instance.email == new_email
+        assert user_instance.disabled is True
+
     def test_user_delete(self, client, db_session, load_users):
         user_instance = db_session.query(User).where(User.id == load_users[0]).first()
         assert user_instance is not None
@@ -134,7 +187,6 @@ class TestUser:
     #     response = client.put(
     #         f"/users/{user_instance.id}/", json=payload,
     #     )
-    #     outcome = response.json()
 
     #     user_instance = db_session.query(User).where(
     #         User.email == user_instance.email

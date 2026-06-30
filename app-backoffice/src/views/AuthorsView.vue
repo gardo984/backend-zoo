@@ -1,11 +1,57 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Swal from 'sweetalert2'
 import { fetchAuthors, createAuthor, updateAuthor, deleteAuthor } from '../api/authors'
 import type { AuthorResponse } from '../types'
 
 const authors = ref<AuthorResponse[]>([])
 const loading = ref(false)
+
+const searchTerm = ref('')
+const statusFilter = ref<'all' | 'true' | 'false'>('all')
+const offset = ref(0)
+const ITEMS_PER_PAGE = 20
+
+const hasPrevious = computed(() => offset.value > 0)
+const hasNext = computed(() => authors.value.length === ITEMS_PER_PAGE)
+
+function buildParams() {
+  const params: Record<string, any> = { offset: offset.value }
+  if (searchTerm.value) params.search = searchTerm.value
+  if (statusFilter.value !== 'all') params.status = statusFilter.value === 'true'
+  return params
+}
+
+async function handleSearch() {
+  offset.value = 0
+  await loadAuthors()
+}
+
+async function handleClear() {
+  searchTerm.value = ''
+  statusFilter.value = 'all'
+  offset.value = 0
+  await loadAuthors()
+}
+
+function handleSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'Enter') handleSearch()
+}
+
+async function handleStatusChange() {
+  offset.value = 0
+  await loadAuthors()
+}
+
+async function goNext() {
+  offset.value += ITEMS_PER_PAGE
+  await loadAuthors()
+}
+
+async function goPrevious() {
+  offset.value = Math.max(0, offset.value - ITEMS_PER_PAGE)
+  await loadAuthors()
+}
 const showModal = ref(false)
 
 const editName = ref('')
@@ -19,7 +65,7 @@ onMounted(() => loadAuthors())
 async function loadAuthors() {
   loading.value = true
   try {
-    authors.value = await fetchAuthors()
+    authors.value = await fetchAuthors(buildParams())
   } catch (err: any) {
     await Swal.fire({ icon: 'error', title: 'Error', text: err.response?.data?.detail || 'Failed to load authors.' })
   } finally {
@@ -99,8 +145,36 @@ async function handleDelete(a: AuthorResponse) {
       <button class="btn btn-primary" @click="openCreate">+ New Author</button>
     </div>
 
+    <!-- Search + Status Filter -->
+    <div class="search-bar">
+      <input
+        v-model="searchTerm"
+        type="text"
+        placeholder="Search by name or email…"
+        class="search-input"
+        @keydown="handleSearchKeydown"
+      />
+      <button class="btn btn-primary" @click="handleSearch">Search</button>
+      <button class="btn btn-secondary" @click="handleClear">Clear</button>
+    </div>
+
+    <div class="filter-row">
+      <select v-model="statusFilter" class="status-select" @change="handleStatusChange">
+        <option value="all">All</option>
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
+      </select>
+    </div>
+
+    <div class="records-info">
+      Showing {{ offset + 1 }}–{{ offset + authors.length }}
+      <span v-if="!hasNext"> (last page)</span>
+    </div>
+
     <div v-if="loading" class="loading">Loading…</div>
-    <div v-else-if="authors.length === 0" class="empty">No authors found.</div>
+    <div v-else-if="authors.length === 0" class="empty">
+      No authors found.
+    </div>
 
     <table v-else class="data-table">
       <thead>
@@ -131,6 +205,12 @@ async function handleDelete(a: AuthorResponse) {
         </tr>
       </tbody>
     </table>
+
+    <!-- Pagination -->
+    <div class="pagination" v-if="authors.length > 0">
+      <button class="btn btn-secondary btn-sm" :disabled="!hasPrevious" @click="goPrevious">← Previous</button>
+      <button class="btn btn-secondary btn-sm" :disabled="!hasNext" @click="goNext">Next →</button>
+    </div>
 
     <!-- Modal -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
@@ -174,6 +254,68 @@ async function handleDelete(a: AuthorResponse) {
   align-items: center;
   margin-bottom: 1.5rem;
   h2 { margin: 0; color: #1e293b; }
+}
+
+.search-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  .search-input {
+    flex: 1;
+    max-width: 360px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+      border-color: #2a5298;
+      box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+    }
+  }
+}
+
+.records-info {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.status-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+
+  &:focus {
+    border-color: #2a5298;
+    box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.15);
+  }
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }
 
 .loading, .empty {

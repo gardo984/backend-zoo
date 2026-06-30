@@ -1,8 +1,21 @@
 import apiClient from './client'
-import type { UserCreate, UserResponse } from '../types'
+import type { UserCreate, UserUpdate, UserResponse } from '../types'
 
-export async function fetchUsers(): Promise<UserResponse[]> {
-  const response = await apiClient.get<UserResponse[]>('/users/')
+export interface FetchUsersParams {
+  search?: string
+  status?: boolean
+  offset?: number
+}
+
+export async function fetchUsers(params?: FetchUsersParams): Promise<UserResponse[]> {
+  const response = await apiClient.get<UserResponse[]>('/users/', {
+    params: { ...params, limit: 20 },
+  })
+  return response.data
+}
+
+export async function updateUser(id: number, data: UserUpdate): Promise<UserResponse> {
+  const response = await apiClient.put<UserResponse>(`/users/${id}`, data)
   return response.data
 }
 

@@ -1,0 +1,19 @@
+default_language_version:
+    python: python3.12
+repos:
+  - repo: https://github.com/psf/black
+    rev: 26.3.1
+    hooks:
+      - id: black
+        name: black (app-library)
+        files: ^app-library/
+        args: [--quiet, --line-length=88]
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        name: flake8 (app-library)
+        files: ^app-library/
+        args: [--max-line-length=88, --extend-ignore=E203]
+        additional_dependencies: []

@@ -1,24 +1,14 @@
 import json
-from typing import List, Dict, Optional, Union
-from fastapi import (
-    FastAPI, Request, Response, status, HTTPException,
-    Depends,
-)
-from fastapi.middleware.cors import CORSMiddleware 
-# from faker import Faker
-# from fastapi.params import Body
-from pydantic import BaseModel
-from app.db.models import Base
-from app.db.database import engine
-
+from fastapi import FastAPI, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from .router import (
-    users, authors, auth, books, categories,
+    users,
+    authors,
+    auth,
+    books,
+    categories,
 )
-from app.config import Settings
-
-# actually handled by alembic ORM manager
-# Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 # fake = Faker()
@@ -26,8 +16,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "http://localhost:8080",
-    "https://localhost",
-    "https://localhost:8080",
+    "http://localhost:5173",
 ]
 
 app.add_middleware(

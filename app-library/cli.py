@@ -1,10 +1,13 @@
-
 import typer
-from typing import List, Optional
-from sqlalchemy.orm import Session
+from random import random
+from decimal import Decimal
+from typing import List
 from app.db.database import SessionLocal
 from app.db.models import (
-    User, Category, Author, Book,
+    User,
+    Category,
+    Author,
+    Book,
 )
 from app.schemas import UserCreate
 from faker import Faker
@@ -21,13 +24,15 @@ def create_superuser(
 ):
     """Create an admin user"""
     db = SessionLocal() if not db_session else db_session
-    users = [UserCreate(email=email, password=password),]
-    instance = User.create_users(db, users)
+    users = [
+        UserCreate(email=email, password=password),
+    ]
+    User.create_users(db, users)
     typer.echo(f"Superuser {email} created!")
 
 
 def _load_random_users():
-    """ Generate random users """
+    """Generate random users"""
     db = SessionLocal()
     current_user = db.query(User).first()
     if not current_user:
@@ -38,7 +43,7 @@ def _load_random_users():
     items_to_create: List[User] = []
     for item in range(20):
         hashed_password = User.get_password_hash(
-            ''.join(fake.random_letters()))
+            "".join(fake.random_letters()))
         db_user = User(
             email=fake.email(),
             password=hashed_password,
@@ -52,13 +57,15 @@ def _load_random_users():
 
 
 def _load_categories():
-    """ Generate random categories """
+    """Generate random categories"""
     db = SessionLocal()
     items_to_create = []
     for item in range(20):
         current_user = fake.random_element(db.query(User).all())
-        db_category = Category(name=fake.job_male(),
-                               created_by_id=current_user.id,)
+        db_category = Category(
+            name=fake.job_male(),
+            created_by_id=current_user.id,
+        )
         items_to_create.append(db_category)
 
     db.add_all(items_to_create)
@@ -67,7 +74,7 @@ def _load_categories():
 
 
 def _load_authors():
-    """ Generate random authors """
+    """Generate random authors"""
     db = SessionLocal()
     items_to_create = []
     for item in range(20):
@@ -87,7 +94,7 @@ def _load_authors():
 
 
 def _load_books():
-    """ Generate random books bound to category and author. """
+    """Generate random books bound to category and author."""
     db = SessionLocal()
     items_to_create: List[Book] = []
     for item in range(20):
@@ -100,6 +107,8 @@ def _load_books():
             author_id=author.id,
             active=True,
             created_by_id=current_user.id,
+            description=fake.text(),
+            price=round(Decimal((random() * 1000) + 1), 3),
         )
         items_to_create.append(db_book)
 

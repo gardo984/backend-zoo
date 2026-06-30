@@ -1,6 +1,7 @@
-
 from fastapi import (
-    Response, Request, Depends, APIRouter,
+    Request,
+    Depends,
+    APIRouter,
     status,
     HTTPException,
 )
@@ -26,7 +27,10 @@ async def login(
     print(f"Url: {request.url}, method: {request.method}")
     print(f"Payload: {credentials.model_dump()}")
     user_exists = User.validate_users_existence(
-        db, [credentials.email,]
+        db,
+        [
+            credentials.email,
+        ],
     )
     if not user_exists:
         print(f"User does not exist: {credentials.email}")
@@ -36,7 +40,9 @@ async def login(
         )
 
     instance, outcome = User.authenticate_user(
-        db, credentials.email, credentials.password,
+        db,
+        credentials.email,
+        credentials.password,
     )
     if not outcome:
         print(f"Invalid credentials: {credentials.email}")
@@ -44,7 +50,10 @@ async def login(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid Credentials",
         )
-    data = dict(user_id=instance.id, email=instance.email,)
+    data = dict(
+        user_id=instance.id,
+        email=instance.email,
+    )
     return dict(
         access_token=create_access_token(data),
         token_type="bearer",

@@ -22,17 +22,6 @@ async function handleLogin() {
     return
   }
 
-  // Hardcoded check for demo
-  if (password.value !== '123456') {
-    await Swal.fire({
-      icon: 'error',
-      title: 'Invalid Credentials',
-      text: 'The password must be 123456.',
-      confirmButtonColor: '#d33',
-    })
-    return
-  }
-
   loading.value = true
   try {
     await authStore.login(email.value, password.value)

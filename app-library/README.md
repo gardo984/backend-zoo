@@ -13,6 +13,8 @@ Glossary:
 		- [Initialize app](#initialize-app)
 		- [DB Migrations](#db-migrations)
 - [Unit Tests](#unit-tests)
+- [Redis CLI](#redis-cli)
+- [Git Hooks](#git-hooks)
 
 ## Setup
 
@@ -100,3 +102,64 @@ alembic history
 pytest -v tests/
 ```
 ![Unit tests Outcome](others/unit-tests.png)
+
+## Redis CLI
+
+- To monitor:
+```sh
+docker-compose exec redis redis-cli monitor
+```
+- To publish a msg to a channel (for testing purposes):
+```sh
+docker-compose exec redis redis-cli publish book_updates '{"msg": "hello world"}'
+```
+- To get the list of active channels (the ones that have subscribers):
+```sh
+docker-compose exec redis redis-cli pubsub channels
+```
+- To subscribe to a channel:
+```sh
+docker-compose exec redis redis-cli subscribe book_updates
+```
+
+
+## Git Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to automatically format and lint Python code in `app-library/` on every commit.
+
+### Installation
+
+```sh
+# From the repo root
+pip install pre-commit
+pre-commit install
+```
+
+The hooks will now run automatically on `git commit`.
+
+### What the hooks do
+
+1. **Black** — Auto-formats all staged `.py` files inside `app-library/`.
+2. **Flake8** — Lints the same files and prevents the commit if issues are found.
+
+### Running manually
+
+```sh
+# Run against all files
+pre-commit run --all-files
+
+# Run against staged files only
+pre-commit run
+```
+
+### Bypassing the hook (emergency only)
+
+```sh
+git commit --no-verify -m "your message"
+```
+
+### Updating hook versions
+
+```sh
+pre-commit autoupdate
+```

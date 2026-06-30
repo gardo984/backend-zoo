@@ -1,6 +1,8 @@
-from typing import List, Dict, Optional, Union
+from typing import List, Union
 from fastapi import (
-    Request, Response, status, HTTPException,
+    Request,
+    status,
+    HTTPException,
     Depends,
     APIRouter,
     Query,
@@ -13,19 +15,14 @@ from app.schemas import (
     CategoryResponse,
 )
 
-from app.db.database import get_db, engine
+from app.db.database import get_db
 from app.db.models import (
-    Base,
     Category,
     User,
 )
 from app.oauth2 import get_current_active_user
 
-
-router = APIRouter(
-    prefix="/categories",
-    tags=["Categories"]
-)
+router = APIRouter(prefix="/categories", tags=["Categories"])
 
 
 @router.get(
@@ -110,7 +107,7 @@ async def category_by_id(
 )
 async def category_create(
     request: Request,
-    payload: Union[CategoryCreate | List[CategoryCreate]],
+    payload: Union[CategoryCreate, List[CategoryCreate]],
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -193,7 +190,7 @@ async def category_delete(
     if not instance:
         print(f"Category does not exist categoryId:{category_id}")
         raise HTTPException(
-            detail=f"Category does not exist",
+            detail="Category does not exist",
             status_code=status.HTTP_404_NOT_FOUND,
         )
 

@@ -1,19 +1,35 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Union, List, Tuple, Any, Optional
+from datetime import datetime
+
 from sqlalchemy import (
-    Column, Integer, String, DateTime,
-    Boolean, ForeignKey, Select, Numeric,
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Boolean,
+    ForeignKey,
+    Select,
+    Numeric,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
-from datetime import datetime
 from sqlalchemy.orm import Session
 from app.db.database import Base
-from typing import Union, List, Tuple, Any, Optional
 from app.utils import hash_password, verify_password_hash
+
+if TYPE_CHECKING:
+    from app.schemas import UserCreate
 
 
 class BaseStructure(Base):
     __abstract__ = True
-    id = Column(Integer, nullable=False, primary_key=True,)
+    id = Column(
+        Integer,
+        nullable=False,
+        primary_key=True,
+    )
     created_at = Column(
         DateTime,
         default=datetime.utcnow,
@@ -30,9 +46,19 @@ class BaseStructure(Base):
 
 class User(BaseStructure):
     __tablename__ = "users"
-    email = Column(String(60), nullable=False,)
-    password = Column(String(120), nullable=False,)
-    disabled = Column(Boolean, default=False, nullable=False,)
+    email = Column(
+        String(60),
+        nullable=False,
+    )
+    password = Column(
+        String(120),
+        nullable=False,
+    )
+    disabled = Column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
 
     # relationships
     created_by = relationship(
@@ -80,7 +106,8 @@ class User(BaseStructure):
 
     @classmethod
     def create_users(
-        cls, db: Session,
+        cls,
+        db: Session,
         users: List,
         current_user: Optional["UserCreate"] = None,
     ) -> List:
@@ -117,7 +144,9 @@ class Author(BaseStructure):
 
     @classmethod
     def validate_existence(
-        cls, instance_id: int, db: Session,
+        cls,
+        instance_id: int,
+        db: Session,
     ) -> "Optional[Author]":
         instance = db.query(cls).where(cls.id == instance_id).first()
         return instance
@@ -134,7 +163,9 @@ class Category(BaseStructure):
 
     @classmethod
     def validate_existence(
-        cls, instance_id: int, db: Session,
+        cls,
+        instance_id: int,
+        db: Session,
     ) -> "Optional[Category]":
         instance = db.query(cls).where(cls.id == instance_id).first()
         return instance
